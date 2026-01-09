@@ -36,19 +36,20 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String       @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          String    @default("user")
+  role          String       @default("user")
   firstName     String?
   lastName      String?
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  googleToken   GoogleToken?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model VerificationToken {
@@ -104,6 +105,19 @@ model Prospect {
   historicalData        ProspectHistorical[]
   reviews               ProspectReview[]
   activities            ProspectActivity[]
+
+  // Enhanced scoring fields
+  highTicketScore       Int?                  // 0-100: Commercial/B2B potential
+  opportunityScore      Int?                  // 0-100: Marketing gap opportunity
+  leadGenScore          Int?                  // 0-100: SEO lead gen site potential
+  scoringFactors        Json?                 // Breakdown of scoring components
+  opportunityTags       String[]              // ["high_ticket", "boring_goldmine", "leadgen_opp"]
+
+  // Email tracking fields
+  emailThreadId         String?               // Gmail thread ID
+  lastEmailSentAt       DateTime?
+  emailCount            Int                   @default(0)
+  sentEmails            SentEmail[]
 }
 
 model ProspectHistorical {
@@ -183,4 +197,70 @@ model SystemJob {
   startedAt   DateTime?
   completedAt DateTime?
   createdAt   DateTime  @default(now())
+}
+
+// ============================================
+// Email & Outreach Models
+// ============================================
+
+model EmailTemplate {
+  id          String      @id @default(cuid())
+  name        String
+  subject     String
+  body        String      @db.Text    // With {{variables}} for mail merge
+  category    String      // "initial_outreach", "follow_up", "value_offer"
+  isActive    Boolean     @default(true)
+  usageCount  Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  sentEmails  SentEmail[]
+}
+
+model SentEmail {
+  id          String         @id @default(cuid())
+  prospectId  String
+  prospect    Prospect       @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  templateId  String?
+  template    EmailTemplate? @relation(fields: [templateId], references: [id])
+  subject     String
+  body        String         @db.Text
+  gmailMsgId  String?        // Gmail message ID for tracking
+  threadId    String?        // Gmail thread ID
+  sentAt      DateTime       @default(now())
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  repliedAt   DateTime?
+  status      String         @default("sent") // "sent", "opened", "clicked", "replied", "bounced"
+}
+
+model LeadGenOpportunity {
+  id               String   @id @default(cuid())
+  category         String   // "plumber", "roofer", "hvac", etc.
+  city             String
+  state            String   @default("MN")
+  searchVolume     Int      // Monthly search volume estimate
+  competitionLevel String   // "low", "medium", "high"
+  topCompetitors   Json?    // Top ranking sites info
+  estimatedValue   Int      // $ per lead estimate
+  prospectCount    Int      @default(0) // How many prospects in this niche
+  avgRating        Float?   // Average rating in this niche
+  score            Int      // Overall opportunity score 0-100
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([category, city])
+}
+
+// Store Gmail OAuth tokens per user
+model GoogleToken {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String   @db.Text
+  refreshToken String?  @db.Text
+  expiresAt    DateTime
+  scope        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

@@ -4,28 +4,35 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  LayoutDashboard, 
-  Users, 
-  Star, 
-  TrendingUp, 
-  AlertTriangle, 
-  Target, 
-  FileText, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  Star,
+  TrendingUp,
+  AlertTriangle,
+  Target,
+  FileText,
+  Settings,
   BarChart3,
   Search,
-  Plus
+  Plus,
+  Gem,
+  DollarSign,
+  Mail,
+  Globe
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'All Prospects', href: '/dashboard/prospects', icon: Users },
   { name: 'Hot Leads', href: '/dashboard/hot-leads', icon: Star },
+  { name: 'Goldmines', href: '/dashboard/goldmines', icon: Gem },
+  { name: 'Lead Gen Opps', href: '/dashboard/lead-gen', icon: Globe },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Market Trends', href: '/dashboard/trends', icon: TrendingUp },
   { name: 'Anomalies', href: '/dashboard/anomalies', icon: AlertTriangle },
   { name: 'New Businesses', href: '/dashboard/new-businesses', icon: Target },
+  { name: 'Email Hub', href: '/dashboard/email', icon: Mail },
   { name: 'Add Prospects', href: '/dashboard/add-prospects', icon: Plus },
   { name: 'Export & Reports', href: '/dashboard/reports', icon: FileText },
 ]
