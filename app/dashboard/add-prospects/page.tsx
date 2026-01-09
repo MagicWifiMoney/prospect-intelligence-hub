@@ -1,8 +1,6 @@
-
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -121,7 +119,7 @@ export default function AddProspectsPage() {
 
   const handleCsvUpload = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!csvFile) {
       toast({
         title: "No File Selected",
@@ -167,23 +165,26 @@ export default function AddProspectsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Add Prospects</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2 mb-2 text-white font-display">
+          <Plus className="h-8 w-8 text-cyan-400" />
+          <span>Add Prospects</span>
+        </h1>
+        <p className="text-gray-400">
           Add new prospects manually, via URLs, or bulk import from CSV
         </p>
       </div>
 
       <Tabs defaultValue="manual" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="manual">
+        <TabsList className="bg-white/5 border border-white/10 p-1">
+          <TabsTrigger value="manual" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400">
             <Plus className="h-4 w-4 mr-2" />
             Manual Entry
           </TabsTrigger>
-          <TabsTrigger value="urls">
+          <TabsTrigger value="urls" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400">
             <LinkIcon className="h-4 w-4 mr-2" />
             Bulk URLs
           </TabsTrigger>
-          <TabsTrigger value="csv">
+          <TabsTrigger value="csv" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400">
             <Upload className="h-4 w-4 mr-2" />
             CSV Upload
           </TabsTrigger>
@@ -191,114 +192,123 @@ export default function AddProspectsPage() {
 
         {/* Manual Entry */}
         <TabsContent value="manual">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Prospect Manually</CardTitle>
-              <CardDescription>
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="p-6 border-b border-white/10">
+              <h3 className="text-lg font-semibold text-white font-display">Add Prospect Manually</h3>
+              <p className="text-sm text-gray-500">
                 Enter business information to add a single prospect
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div className="p-6">
               <form onSubmit={handleManualSubmit} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="business_name">Business Name *</Label>
+                    <Label htmlFor="business_name" className="text-gray-300">Business Name *</Label>
                     <Input
                       id="business_name"
                       required
                       value={formData.business_name}
                       onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
                       placeholder="ABC Painting Services"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
+                    <Label htmlFor="category" className="text-gray-300">Category *</Label>
                     <Input
                       id="category"
                       required
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       placeholder="Painter, Bath Remodeler, etc."
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
+                  <Label htmlFor="address" className="text-gray-300">Street Address</Label>
                   <Input
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="123 Main St"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                   />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city" className="text-gray-300">City</Label>
                     <Input
                       id="city"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       placeholder="Minneapolis"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
+                    <Label htmlFor="state" className="text-gray-300">State</Label>
                     <Input
                       id="state"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                       placeholder="MN"
                       maxLength={2}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="zip">ZIP Code</Label>
+                    <Label htmlFor="zip" className="text-gray-300">ZIP Code</Label>
                     <Input
                       id="zip"
                       value={formData.zip}
                       onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
                       placeholder="55401"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="text-gray-300">Phone</Label>
                     <Input
                       id="phone"
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="(555) 123-4567"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website" className="text-gray-300">Website</Label>
                     <Input
                       id="website"
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                       placeholder="https://example.com"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gmb_url">Google My Business URL</Label>
+                  <Label htmlFor="gmb_url" className="text-gray-300">Google My Business URL</Label>
                   <Input
                     id="gmb_url"
                     type="url"
                     value={formData.gmb_url}
                     onChange={(e) => setFormData({ ...formData, gmb_url: e.target.value })}
                     placeholder="https://maps.google.com/..."
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                   />
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button type="submit" disabled={loading} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -312,37 +322,37 @@ export default function AddProspectsPage() {
                   )}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Bulk URLs */}
         <TabsContent value="urls">
-          <Card>
-            <CardHeader>
-              <CardTitle>Import from URLs</CardTitle>
-              <CardDescription>
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="p-6 border-b border-white/10">
+              <h3 className="text-lg font-semibold text-white font-display">Import from URLs</h3>
+              <p className="text-sm text-gray-500">
                 Paste Google My Business URLs or website URLs (one per line)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div className="p-6">
               <form onSubmit={handleBulkUrlSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="urls">URLs</Label>
+                  <Label htmlFor="urls" className="text-gray-300">URLs</Label>
                   <Textarea
                     id="urls"
                     value={urls}
                     onChange={(e) => setUrls(e.target.value)}
                     placeholder="https://maps.google.com/...&#10;https://example.com&#10;https://maps.google.com/..."
                     rows={12}
-                    className="font-mono text-sm"
+                    className="font-mono text-sm bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     Enter one URL per line. We'll automatically scrape business information from Google My Business or websites.
                   </p>
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button type="submit" disabled={loading} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -356,45 +366,46 @@ export default function AddProspectsPage() {
                   )}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* CSV Upload */}
         <TabsContent value="csv">
-          <Card>
-            <CardHeader>
-              <CardTitle>Import from CSV</CardTitle>
-              <CardDescription>
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="p-6 border-b border-white/10">
+              <h3 className="text-lg font-semibold text-white font-display">Import from CSV</h3>
+              <p className="text-sm text-gray-500">
                 Upload a CSV file with prospect information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div className="p-6">
               <form onSubmit={handleCsvUpload} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="csv">CSV File</Label>
+                  <Label htmlFor="csv" className="text-gray-300">CSV File</Label>
                   <Input
                     id="csv"
                     type="file"
                     accept=".csv"
                     onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                    className="bg-white/5 border-white/10 text-white file:bg-white/10 file:text-white file:border-0"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     Expected columns: business_name, address, city, state, zip, phone, website, gmb_url, category
                   </p>
                 </div>
 
                 {csvFile && (
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">Selected file:</p>
-                    <p className="text-sm text-muted-foreground">{csvFile.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                    <p className="text-sm font-medium text-white">Selected file:</p>
+                    <p className="text-sm text-gray-400">{csvFile.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">
                       {(csvFile.size / 1024).toFixed(2)} KB
                     </p>
                   </div>
                 )}
 
-                <Button type="submit" disabled={loading || !csvFile} className="w-full">
+                <Button type="submit" disabled={loading || !csvFile} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white disabled:opacity-50">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -408,8 +419,8 @@ export default function AddProspectsPage() {
                   )}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

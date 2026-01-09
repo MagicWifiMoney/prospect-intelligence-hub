@@ -11,17 +11,27 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const session = await getServerSession(authOptions)
-  
+
   if (!session) {
     redirect('/auth/signin')
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="dark min-h-screen bg-[#0a0f1a] text-white">
+      {/* Gradient mesh background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-cyan-500/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-amber-500/5 rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 right-1/4 w-1/3 h-1/3 bg-cyan-500/3 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Noise overlay */}
+      <div className="noise-overlay" />
+
       <DashboardSidebar />
-      <div className="pl-64">
+      <div className="pl-64 relative">
         <DashboardHeader />
-        <main className="p-6">
+        <main className="p-6 space-y-6">
           {children}
         </main>
       </div>

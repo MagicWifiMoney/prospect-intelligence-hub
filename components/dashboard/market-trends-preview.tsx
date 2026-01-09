@@ -2,7 +2,6 @@
 'use client'
 
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, ArrowRight, Calendar } from 'lucide-react'
@@ -28,94 +27,94 @@ export function MarketTrendsPreview({ trends }: MarketTrendsPreviewProps) {
     switch (trend?.toLowerCase()) {
       case 'growing':
       case 'accelerating':
-        return 'bg-green-500'
+        return 'bg-green-400'
       case 'declining':
-        return 'bg-red-500'
+        return 'bg-red-400'
       case 'emerging':
-        return 'bg-blue-500'
+        return 'bg-cyan-400'
       case 'stable':
-        return 'bg-gray-500'
+        return 'bg-gray-400'
       default:
-        return 'bg-purple-500'
+        return 'bg-purple-400'
     }
   }
 
   return (
-    <Card className="lg:col-span-2">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <span>Market Trends</span>
-            </CardTitle>
-            <CardDescription>Latest insights and market developments</CardDescription>
+    <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center space-x-2 mb-1">
+            <TrendingUp className="h-5 w-5 text-green-400" />
+            <h3 className="text-lg font-semibold text-white font-display">Market Trends</h3>
           </div>
-          <Link href="/dashboard/trends">
-            <Button variant="outline" size="sm">
-              View All Trends
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <p className="text-sm text-gray-500">Latest insights and market developments</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {trends.length === 0 ? (
-            <div className="col-span-3 text-center py-8 text-muted-foreground">
-              <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No market trends available.</p>
-              <p className="text-sm">Trends will appear here after data collection.</p>
-            </div>
-          ) : (
-            trends.map((trend, index) => (
-              <motion.div
-                key={trend.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <Badge variant="outline" className="text-xs">
-                    {trend.category}
-                  </Badge>
-                  {trend.trend && (
-                    <div className="flex items-center space-x-1">
-                      <div className={`w-2 h-2 rounded-full ${getTrendColor(trend.trend)}`} />
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {trend.trend}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                <h4 className="font-semibold text-sm mb-2 line-clamp-2">
-                  {trend.title}
-                </h4>
-                
-                <p className="text-xs text-muted-foreground mb-3 line-clamp-3">
-                  {trend.content}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  {trend.relevance && (
-                    <Badge variant="secondary" className="text-xs">
-                      {Math.round(trend.relevance * 100)}% relevant
-                    </Badge>
-                  )}
-                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      {formatDistanceToNow(new Date(trend.extractedAt), { addSuffix: true })}
+        <Link href="/dashboard/trends">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white"
+          >
+            View All Trends
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {trends.length === 0 ? (
+          <div className="col-span-3 text-center py-8">
+            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-600" />
+            <p className="text-gray-400">No market trends available.</p>
+            <p className="text-sm text-gray-500">Trends will appear here after data collection.</p>
+          </div>
+        ) : (
+          trends.map((trend, index) => (
+            <motion.div
+              key={trend.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-white/10 cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <Badge className="text-xs bg-white/10 text-gray-300 border-white/20">
+                  {trend.category}
+                </Badge>
+                {trend.trend && (
+                  <div className="flex items-center space-x-1">
+                    <div className={`w-2 h-2 rounded-full ${getTrendColor(trend.trend)}`} />
+                    <span className="text-xs text-gray-400 capitalize">
+                      {trend.trend}
                     </span>
                   </div>
+                )}
+              </div>
+
+              <h4 className="font-semibold text-sm text-white mb-2 line-clamp-2">
+                {trend.title}
+              </h4>
+
+              <p className="text-xs text-gray-500 mb-3 line-clamp-3">
+                {trend.content}
+              </p>
+
+              <div className="flex items-center justify-between">
+                {trend.relevance && (
+                  <Badge className="text-xs bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                    {Math.round(trend.relevance * 100)}% relevant
+                  </Badge>
+                )}
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    {formatDistanceToNow(new Date(trend.extractedAt), { addSuffix: true })}
+                  </span>
                 </div>
-              </motion.div>
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+    </div>
   )
 }

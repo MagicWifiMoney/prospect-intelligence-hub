@@ -7,6 +7,7 @@ import { ProspectCharts } from '@/components/dashboard/prospect-charts'
 import { HotLeadsPreview } from '@/components/dashboard/hot-leads-preview'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { MarketTrendsPreview } from '@/components/dashboard/market-trends-preview'
+import { Sparkles, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,24 +92,26 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}! 👋
+      <div className="backdrop-blur-xl bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-amber-500/10 border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="w-5 h-5 text-cyan-400" />
+          <span className="text-sm text-cyan-400 font-medium">AI-Powered Intelligence</span>
+        </div>
+        <h1 className="text-2xl font-bold text-white font-display mb-2">
+          Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}!
         </h1>
-        <p className="text-blue-100 mb-4">
+        <p className="text-gray-400 mb-4">
           Here's your prospect intelligence overview for today
         </p>
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-4 border border-white/20">
-          <h3 className="font-semibold mb-2 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <div className="backdrop-blur-sm bg-white/5 rounded-xl p-4 border border-white/10">
+          <h3 className="font-semibold text-white mb-2 flex items-center text-sm">
+            <Info className="w-4 h-4 mr-2 text-cyan-400" />
             About This Dashboard
           </h3>
-          <p className="text-sm text-blue-50 leading-relaxed">
-            This overview aggregates data from {dashboardData.totalProspects.toLocaleString()} Minnesota service business prospects across landscaping, home services, construction, and more. 
-            Data is sourced from Google Business Profile listings and analyzed with AI-powered lead scoring. 
-            Use this dashboard to identify high-potential prospects, track emerging trends, and prioritize your outreach efforts based on business health indicators like review counts, ratings, and engagement signals.
+          <p className="text-sm text-gray-400 leading-relaxed">
+            This overview aggregates data from <span className="text-cyan-400 font-medium">{dashboardData.totalProspects.toLocaleString()}</span> Minnesota service business prospects across landscaping, home services, construction, and more.
+            Data is sourced from Google Business Profile listings and analyzed with AI-powered lead scoring.
+            Use this dashboard to identify high-potential prospects, track emerging trends, and prioritize your outreach efforts.
           </p>
         </div>
       </div>

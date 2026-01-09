@@ -1,7 +1,6 @@
 
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Star, Target, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
@@ -34,7 +33,7 @@ function CountUp({ end, duration = 2000 }: { end: number; duration?: number }) {
     return () => cancelAnimationFrame(animationFrame)
   }, [end, duration])
 
-  return <span>{count}</span>
+  return <span>{count.toLocaleString()}</span>
 }
 
 export function OverviewStats({ totalProspects, hotLeads, newBusinesses, averageScore }: OverviewStatsProps) {
@@ -43,35 +42,43 @@ export function OverviewStats({ totalProspects, hotLeads, newBusinesses, average
       title: 'Total Prospects',
       value: totalProspects,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      iconColor: 'text-cyan-400',
+      glowColor: 'shadow-cyan-500/20',
+      bgGradient: 'from-cyan-500/10 to-cyan-500/5',
+      description: 'In your database',
     },
     {
       title: 'Hot Leads',
       value: hotLeads,
       icon: Star,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      iconColor: 'text-amber-400',
+      glowColor: 'shadow-amber-500/20',
+      bgGradient: 'from-amber-500/10 to-amber-500/5',
+      description: 'Ready for outreach',
     },
     {
       title: 'New Businesses',
       value: newBusinesses,
       icon: Target,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      iconColor: 'text-green-400',
+      glowColor: 'shadow-green-500/20',
+      bgGradient: 'from-green-500/10 to-green-500/5',
+      description: 'Last 7 days',
     },
     {
       title: 'Average Score',
       value: averageScore,
       icon: TrendingUp,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      iconColor: 'text-purple-400',
+      glowColor: 'shadow-purple-500/20',
+      bgGradient: 'from-purple-500/10 to-purple-500/5',
       isDecimal: true,
+      description: 'Lead quality score',
     },
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
         <motion.div
           key={stat.title}
@@ -79,32 +86,29 @@ export function OverviewStats({ totalProspects, hotLeads, newBusinesses, average
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-          <Card className="hover:shadow-lg transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <div className={`backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all duration-300 shadow-lg ${stat.glowColor}`}>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-gray-400">
                 {stat.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </span>
+              <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.bgGradient}`}>
+                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stat.isDecimal ? (
+            </div>
+            <div className="text-3xl font-bold text-white font-display mb-1">
+              {stat.isDecimal ? (
+                <>
                   <CountUp end={Math.round(stat.value * 10) / 10} />
-                ) : (
-                  <CountUp end={stat.value} />
-                )}
-                {stat.isDecimal && '%'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stat.title === 'New Businesses' && 'Last 7 days'}
-                {stat.title === 'Hot Leads' && 'Ready for outreach'}
-                {stat.title === 'Total Prospects' && 'In your database'}
-                {stat.title === 'Average Score' && 'Lead quality score'}
-              </p>
-            </CardContent>
-          </Card>
+                  <span className="text-2xl">%</span>
+                </>
+              ) : (
+                <CountUp end={stat.value} />
+              )}
+            </div>
+            <p className="text-xs text-gray-500">
+              {stat.description}
+            </p>
+          </div>
         </motion.div>
       ))}
     </div>

@@ -14,10 +14,8 @@ import {
   FileText,
   Settings,
   BarChart3,
-  Search,
   Plus,
   Gem,
-  DollarSign,
   Mail,
   Globe,
   Radar
@@ -43,20 +41,22 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-lg">
+    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0f1a]/80 backdrop-blur-xl border-r border-white/10">
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-6 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center space-x-2">
-            <Search className="w-8 h-8 text-primary" />
-            <div className="text-xl font-bold text-foreground">
-              Prospect Hub
+        <div className="flex items-center h-16 px-6 border-b border-white/10">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+              <Radar className="w-5 h-5 text-white" />
             </div>
+            <span className="text-xl font-bold font-display text-white">
+              Prospect Hub
+            </span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -64,18 +64,18 @@ export function DashboardSidebar() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  "group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-gradient-to-r from-cyan-500/20 to-cyan-500/5 text-cyan-400 border-l-2 border-cyan-400 shadow-lg shadow-cyan-500/10"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 )}
               >
                 <item.icon
                   className={cn(
                     "mr-3 h-5 w-5 transition-colors",
                     isActive
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground group-hover:text-accent-foreground"
+                      ? "text-cyan-400"
+                      : "text-gray-500 group-hover:text-gray-300"
                   )}
                 />
                 {item.name}
@@ -85,12 +85,22 @@ export function DashboardSidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="px-3 py-4 border-t border-white/10">
           <Link
             href="/dashboard/settings"
-            className="group flex items-center px-3 py-2 text-sm font-medium text-muted-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+            className={cn(
+              "group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
+              pathname === '/dashboard/settings'
+                ? "bg-gradient-to-r from-cyan-500/20 to-cyan-500/5 text-cyan-400 border-l-2 border-cyan-400"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+            )}
           >
-            <Settings className="mr-3 h-5 w-5" />
+            <Settings className={cn(
+              "mr-3 h-5 w-5 transition-colors",
+              pathname === '/dashboard/settings'
+                ? "text-cyan-400"
+                : "text-gray-500 group-hover:text-gray-300"
+            )} />
             Settings
           </Link>
         </div>

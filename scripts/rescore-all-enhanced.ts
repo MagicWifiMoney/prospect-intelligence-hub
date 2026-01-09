@@ -33,7 +33,7 @@ async function rescoreAllProspects() {
             highTicketScore: scores.highTicketScore,
             opportunityScore: scores.opportunityScore,
             leadGenScore: scores.leadGenScore,
-            scoringFactors: scores.scoringFactors,
+            scoringFactors: JSON.parse(JSON.stringify(scores.scoringFactors)),
             opportunityTags: scores.opportunityTags,
           },
         })
