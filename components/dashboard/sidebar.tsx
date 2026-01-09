@@ -19,7 +19,8 @@ import {
   Gem,
   DollarSign,
   Mail,
-  Globe
+  Globe,
+  Radar
 } from 'lucide-react'
 
 const navigation = [
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Hot Leads', href: '/dashboard/hot-leads', icon: Star },
   { name: 'Goldmines', href: '/dashboard/goldmines', icon: Gem },
   { name: 'Lead Gen Opps', href: '/dashboard/lead-gen', icon: Globe },
+  { name: 'Scraper', href: '/dashboard/scrape', icon: Radar },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Market Trends', href: '/dashboard/trends', icon: TrendingUp },
   { name: 'Anomalies', href: '/dashboard/anomalies', icon: AlertTriangle },
