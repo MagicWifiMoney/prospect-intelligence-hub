@@ -210,6 +210,87 @@ const APIFY_ACTORS = {
 
 ---
 
-*Last updated: 2026-01-10 @ 2:23am*
+---
+
+## 🧠 CREATIVE TECHNIQUES (No Apollo/Hunter)
+
+### Free Email Finding Methods
+
+| Method | How It Works | Tool/Approach |
+|--------|--------------|---------------|
+| **Email Permutation** | Generate first.last@, f.last@, firstl@ variations | `emeth-/Email-Permutator` (GitHub) |
+| **SMTP Verification** | Test if email exists without sending | `getpingback/ping-email` or roll our own |
+| **Google Search Dorking** | `site:company.com email OR contact` | Apify Google Search scraper |
+| **Website Contact Scraping** | Extract emails from /contact, /about pages | Already have: `vdrmota/contact-info-scraper` |
+| **WHOIS Lookup** | Domain registrant often = owner email | `datascoutapi/DomainDaddy` on Apify |
+| **GitHub Commits** | Devs expose emails in git commits | `pixelbubble/GithubEmailFinder` |
+| **Catch-All Detection** | Test if domain accepts all emails | SMTP check technique |
+| **Social Bio Scraping** | Twitter/IG/LinkedIn bios often have emails | Social scrapers |
+
+### Free Open Source Tools Worth Integrating
+
+| Tool | Stars | What It Does |
+|------|-------|--------------|
+| `gosom/google-maps-scraper` | ⭐2.6K | Go-based GMaps scraper with emails |
+| `omkarcloud/google-maps-scraper` | ⭐2.3K | Python GMaps scraper |
+| `Josue87/EmailFinder` | ⭐408 | Find emails via search engines |
+| `mautic/mautic` | ⭐9K | Open source marketing automation |
+| `PaulleDemon/Email-automation` | ⭐108 | Open source cold email tool |
+
+### N8N Integration Ideas (from X threads)
+
+1. **N8N + Apify Free Tier** → Unlimited lead gen with workflows
+2. **Auto-personalization** → Scrape LinkedIn/website → AI generates hooks
+3. **Email warmup** → Rotate templates to avoid spam filters
+4. **Follow-up sequences** → Same thread replies for better deliverability
+
+### Advanced Signal Sources
+
+| Signal | Why It Matters | How To Get |
+|--------|----------------|------------|
+| **Job Postings** | Hiring = budget, growth | Indeed/LinkedIn scraper |
+| **Tech Stack** | No website = needs one, old WP = needs refresh | BuiltWith |
+| **Review Velocity** | Slowing reviews = struggling business | Compare GMaps + Yelp trends |
+| **Social Inactivity** | Dead FB page = needs help | Check last post date |
+| **Website Age** | Old domain + bad site = relaunch opportunity | WHOIS |
+| **Competitor Gaps** | High rating competitors, low rating prospect | Cross-reference reviews |
+| **Response Time** | Slow to respond = pain point to solve | Mystery shop |
+| **Ad Spend Signals** | Running FB/Google ads = has budget | Facebook Ad Library scraper |
+
+---
+
+## 📋 FULL IMPLEMENTATION CHECKLIST
+
+### Phase 1: Core (Do First)
+- [ ] 1. Swap Google Maps actor → email-extracting version
+- [ ] 2. Add contact scraper for website enrichment
+- [ ] 3. Add BuiltWith tech stack detection
+- [ ] 4. Add email permutation + SMTP verification
+
+### Phase 2: Multi-Source Leads
+- [ ] 5. Yelp listings + reviews
+- [ ] 6. Angi (Angie's List)
+- [ ] 7. Yellow Pages
+- [ ] 8. Facebook Pages scraper
+- [ ] 9. LinkedIn company data
+- [ ] 10. BBB listings
+
+### Phase 3: Smart Enrichment
+- [ ] 11. Google Search dorking for emails
+- [ ] 12. WHOIS/domain intelligence
+- [ ] 13. Social bio email extraction
+- [ ] 14. Job posting signals (hiring = budget)
+- [ ] 15. Facebook Ad Library (ad spend = budget)
+
+### Phase 4: Outreach Automation
+- [ ] 16. Complete Gmail integration
+- [ ] 17. Email templates with merge fields
+- [ ] 18. Follow-up sequences (same-thread)
+- [ ] 19. A/B testing for subject lines
+- [ ] 20. N8N workflow export for power users
+
+---
+
+*Last updated: 2026-01-10 @ 2:26am*
 *Owner: Jay G + Bottie 🤖*
 *Branch: feature/enhanced-scraping*
