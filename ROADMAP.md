@@ -29,29 +29,30 @@
 
 ## Phase 1: Core Scraping Upgrades ⭐ PRIORITY
 
-### 1.1 Swap Google Maps Scraper
-- [ ] Replace `compass/crawler-google-places` → `lukaskrivka/google-maps-with-contact-details`
-- [ ] Same Google Maps data PLUS auto-extracted emails/socials
-- [ ] Update `lib/apify.ts` with new actor
-- [ ] Update `app/api/scrape/google-maps/route.ts`
-- [ ] Test with quick scrape
+### 1.1 Swap Google Maps Scraper ✅ DONE
+- [x] Replace `compass/crawler-google-places` → `lukaskrivka/google-maps-with-contact-details`
+- [x] Same Google Maps data PLUS auto-extracted emails/socials
+- [x] Update `lib/apify.ts` with new actor
+- [x] Update import function to capture emails/socials from enhanced results
+- [ ] Test with quick scrape (need live API test)
 
-### 1.2 Add Website Contact Scraper
-- [ ] Integrate `vdrmota/contact-info-scraper`
-- [ ] New route: `app/api/scrape/enrich-contacts/route.ts`
-- [ ] "Enrich" button on prospect pages
-- [ ] Bulk enrichment for prospects missing emails
+### 1.2 Add Website Contact Scraper ✅ DONE
+- [x] Integrate `vdrmota/contact-info-scraper`
+- [x] New route: `app/api/scrape/enrich-contacts/route.ts`
+- [x] Bulk enrichment for prospects missing emails
+- [ ] "Enrich" button on prospect pages (UI)
 
-### 1.3 Add Apollo-Style Leads Finder
-- [ ] Integrate `code_crafter/leads-finder`
-- [ ] New route: `app/api/scrape/find-decision-makers/route.ts`
-- [ ] "Find Decision Makers" feature in dashboard
+### 1.3 Add Apollo-Style Leads Finder ✅ DONE
+- [x] Integrate `code_crafter/leads-finder`
+- [x] New route: `app/api/scrape/find-decision-makers/route.ts`
+- [ ] "Find Decision Makers" feature in dashboard (UI)
 
-### 1.4 Add Tech Stack Detection
-- [ ] Integrate `canadesk/builtwith` (2M+ runs)
-- [ ] Detect: CMS, analytics, live chat, forms, etc.
-- [ ] New scoring factor: "Needs Website" / "Has Outdated Tech"
-- [ ] Flag prospects with no website or old WordPress
+### 1.4 Add Tech Stack Detection ✅ DONE
+- [x] Integrate `canadesk/builtwith` (2M+ runs)
+- [x] Detect: CMS, analytics, live chat, forms, etc.
+- [x] New route: `app/api/scrape/tech-stack/route.ts`
+- [x] `needsWebsite` flag for prospects with no/bad sites
+- [ ] New scoring factor integration (scoring-enhanced.ts)
 
 ---
 
@@ -165,10 +166,10 @@ enrichmentSources   String[]        // ["google_maps", "yelp", "builtwith", etc.
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Enhanced Google Maps | 🔲 | Swap actor |
-| 2 | Website Contact Scraper | 🔲 | Enrichment |
-| 3 | Leads Finder | 🔲 | Decision makers |
-| 4 | BuiltWith Tech Stack | 🔲 | Website needs |
+| 1 | Enhanced Google Maps | ✅ | Swap actor - DONE |
+| 2 | Website Contact Scraper | ✅ | Enrichment - DONE |
+| 3 | Leads Finder | ✅ | Decision makers - DONE |
+| 4 | BuiltWith Tech Stack | ✅ | Website needs - DONE |
 | 5 | Yelp Listings | 🔲 | Cross-reference |
 | 6 | Yelp Reviews | 🔲 | Sentiment |
 | 7 | Facebook Pages | 🔲 | Social check |
@@ -261,11 +262,11 @@ const APIFY_ACTORS = {
 
 ## 📋 FULL IMPLEMENTATION CHECKLIST
 
-### Phase 1: Core (Do First)
-- [ ] 1. Swap Google Maps actor → email-extracting version
-- [ ] 2. Add contact scraper for website enrichment
-- [ ] 3. Add BuiltWith tech stack detection
-- [ ] 4. Add email permutation + SMTP verification
+### Phase 1: Core (Do First) ✅ MOSTLY COMPLETE
+- [x] 1. Swap Google Maps actor → email-extracting version
+- [x] 2. Add contact scraper for website enrichment
+- [x] 3. Add BuiltWith tech stack detection
+- [ ] 4. Add email permutation + SMTP verification (still TODO)
 
 ### Phase 2: Multi-Source Leads
 - [ ] 5. Yelp listings + reviews
@@ -291,6 +292,37 @@ const APIFY_ACTORS = {
 
 ---
 
-*Last updated: 2026-01-10 @ 2:26am*
+*Last updated: 2026-01-11 @ 12:15am*
 *Owner: Jay G + Bottie 🤖*
 *Branch: feature/enhanced-scraping*
+
+## 📝 Implementation Notes (Phase 1)
+
+### New Files Created:
+- `app/api/scrape/enrich-contacts/route.ts` - Website contact extraction
+- `app/api/scrape/find-decision-makers/route.ts` - Apollo-style lookup
+- `app/api/scrape/tech-stack/route.ts` - BuiltWith integration
+
+### Schema Updates:
+Added 30+ new fields to Prospect model including:
+- Owner/decision maker info (ownerName, ownerEmail, ownerTitle, etc.)
+- Company socials (companyLinkedIn, companyFacebook, etc.)
+- Tech stack detection (hasCMS, cmsType, hasAnalytics, etc.)
+- Multi-source ratings (yelpRating, angiRating, bbbRating, etc.)
+- Enrichment tracking (enrichedAt, enrichmentSources[], etc.)
+
+### API Endpoints:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/scrape/enrich-contacts` | POST | Start contact enrichment |
+| `/api/scrape/enrich-contacts?jobId=x` | GET | Check status/process results |
+| `/api/scrape/find-decision-makers` | POST | Find owners/CEOs |
+| `/api/scrape/find-decision-makers?jobId=x` | GET | Check status |
+| `/api/scrape/tech-stack` | POST | Detect tech stack |
+| `/api/scrape/tech-stack?jobId=x` | GET | Check status |
+
+### Next Steps:
+1. Run `prisma migrate dev` on live DB to add new columns
+2. Test with live Apify API calls
+3. Add UI buttons for enrichment on prospect detail pages
+4. Integrate tech stack into scoring algorithm

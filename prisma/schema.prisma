@@ -118,6 +118,54 @@ model Prospect {
   lastEmailSentAt       DateTime?
   emailCount            Int                   @default(0)
   sentEmails            SentEmail[]
+
+  // ===== PHASE 1: Enhanced Contact & Enrichment Fields =====
+  
+  // Owner/Decision Maker info (from leads-finder)
+  ownerName             String?
+  ownerEmail            String?
+  ownerPhone            String?
+  ownerLinkedIn         String?
+  ownerTitle            String?
+  
+  // Company social profiles (from contact scraper)
+  companyLinkedIn       String?
+  companyFacebook       String?
+  companyInstagram      String?
+  companyTwitter        String?
+  companyYouTube        String?
+  
+  // Additional emails found
+  additionalEmails      String[]              // Array of all emails found
+  
+  // Tech stack detection (from BuiltWith)
+  techStackRaw          Json?                 // Full BuiltWith response
+  hasCMS                Boolean?
+  cmsType               String?               // WordPress, Wix, Squarespace, etc.
+  hasAnalytics          Boolean?
+  analyticsType         String?               // Google Analytics, etc.
+  hasLiveChat           Boolean?
+  liveChatType          String?
+  hasBookingWidget      Boolean?
+  hasForms              Boolean?
+  hasEcommerce          Boolean?
+  needsWebsite          Boolean?              // No website or very outdated
+  
+  // Multi-source ratings
+  yelpUrl               String?
+  yelpRating            Float?
+  yelpReviewCount       Int?
+  angiRating            Float?
+  angiReviewCount       Int?
+  bbbRating             String?               // A+, A, B, etc.
+  bbbUrl                String?
+  facebookRating        Float?
+  facebookReviewCount   Int?
+  
+  // Enrichment tracking
+  enrichedAt            DateTime?
+  enrichmentSources     String[]              // ["google_maps", "contact_scraper", "builtwith"]
+  lastEnrichmentError   String?
 }
 
 model ProspectHistorical {
