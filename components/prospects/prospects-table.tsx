@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -19,12 +20,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
-  Eye, 
-  Phone, 
-  Mail, 
-  ExternalLink, 
-  MoreHorizontal, 
+import {
+  Eye,
+  Phone,
+  Mail,
+  ExternalLink,
+  MoreHorizontal,
   Star,
   MapPin,
   AlertTriangle,
@@ -34,6 +35,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { QuickActionsMenu } from './quick-actions-menu'
+import { BulkActionToolbar } from './bulk-action-toolbar'
 
 interface Prospect {
   id: string
@@ -59,19 +61,22 @@ export function ProspectsTable() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const { toast } = useToast()
 
   const fetchProspects = async (currentPage = 1) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects?page=${currentPage}&limit=20`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setProspects(data.prospects || [])
         setTotalPages(data.totalPages || 1)
         setTotal(data.total || 0)
         setPage(currentPage)
+        // Clear selection when page changes
+        setSelectedIds([])
       }
     } catch (error) {
       console.error('Error fetching prospects:', error)
@@ -94,7 +99,7 @@ export function ProspectsTable() {
       const response = await fetch(`/api/prospects/${prospectId}/analyze`, {
         method: 'POST',
       })
-      
+
       if (response.ok) {
         toast({
           title: "Analysis Started",
@@ -111,6 +116,26 @@ export function ProspectsTable() {
       })
     }
   }
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prospects.map(p => p.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const handleSelectOne = (prospectId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, prospectId])
+    } else {
+      setSelectedIds(prev => prev.filter(id => id !== prospectId))
+    }
+  }
+
+  const isAllSelected = prospects.length > 0 && selectedIds.length === prospects.length
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < prospects.length
 
   if (loading) {
     return (
@@ -131,6 +156,11 @@ export function ProspectsTable() {
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             Showing {prospects.length} of {total} prospects
+            {selectedIds.length > 0 && (
+              <span className="ml-2 text-cyan-400">
+                ({selectedIds.length} selected)
+              </span>
+            )}
           </p>
           <div className="flex space-x-2">
             <Button
@@ -161,6 +191,14 @@ export function ProspectsTable() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
+                  className="border-gray-600 data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+                />
+              </TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Type & Location</TableHead>
               <TableHead>Contact</TableHead>
@@ -177,8 +215,17 @@ export function ProspectsTable() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group hover:bg-muted/50"
+                className={`group hover:bg-muted/50 ${selectedIds.includes(prospect.id) ? 'bg-cyan-500/10' : ''
+                  }`}
               >
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.includes(prospect.id)}
+                    onCheckedChange={(checked) => handleSelectOne(prospect.id, checked as boolean)}
+                    aria-label={`Select ${prospect.companyName}`}
+                    className="border-gray-600 data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-start space-x-3">
                     <div className="flex-1 min-w-0">
@@ -304,8 +351,8 @@ export function ProspectsTable() {
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <QuickActionsMenu 
-                      prospect={prospect} 
+                    <QuickActionsMenu
+                      prospect={prospect}
                       onUpdate={() => fetchProspects(page)}
                     />
                   </div>
@@ -328,6 +375,14 @@ export function ProspectsTable() {
           </Link>
         </div>
       )}
+
+      {/* Bulk Action Toolbar */}
+      <BulkActionToolbar
+        selectedIds={selectedIds}
+        onClearSelection={() => setSelectedIds([])}
+        onActionComplete={() => fetchProspects(page)}
+      />
     </div>
   )
 }
+

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { ProspectsTable } from '@/components/prospects/prospects-table'
 import { ProspectsFilters } from '@/components/prospects/prospects-filters'
 import { LeadScoringInfo } from '@/components/ui/lead-scoring-info'
+import { ExportButton } from '@/components/prospects/export-button'
 import { Users, Search } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -26,7 +27,10 @@ export default async function ProspectsPage() {
               Manage and analyze your prospect database
             </p>
           </div>
-          <LeadScoringInfo />
+          <div className="flex items-center space-x-3">
+            <ExportButton />
+            <LeadScoringInfo />
+          </div>
         </div>
 
         {/* Page Description */}
