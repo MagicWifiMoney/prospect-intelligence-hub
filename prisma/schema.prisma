@@ -170,6 +170,9 @@ model Prospect {
   lastEmailSentAt       DateTime?
   emailCount            Int                   @default(0)
   sentEmails            SentEmail[]
+  
+  // AI-generated reports
+  reports               ProspectReport[]
 
   // ===== PHASE 1: Enhanced Contact & Enrichment Fields =====
   
@@ -364,3 +367,28 @@ model GoogleToken {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// AI-generated prospect reports (shareable landing pages)
+model ProspectReport {
+  id              String   @id @default(cuid())
+  prospectId      String
+  prospect        Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  // Generated content
+  headline        String
+  strengths       String[]
+  opportunities   String[]
+  competitorInsights String @db.Text
+  ctaText         String
+  estimatedValue  String
+  
+  // Sharing
+  shareToken      String   @unique @default(cuid())
+  views           Int      @default(0)
+  lastViewedAt    DateTime?
+  
+  // Metadata
+  generatedAt     DateTime @default(now())
+  expiresAt       DateTime?
+}
+

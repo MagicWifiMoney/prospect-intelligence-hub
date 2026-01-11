@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Audit: Twin Cities Plumbing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a0e17;
+      --bg-surface: #0f1419;
+      --bg-elevated: #161d27;
+      --bg-glass: rgba(22, 29, 39, 0.7);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(56, 189, 248, 0.2);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #fb7185;
+      --gradient-premium: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      --gradient-success: linear-gradient(135deg, #34d399 0%, #22d3ee 100%);
+      --gradient-warning: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+      --gradient-danger: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+      --shadow-glow: 0 0 60px rgba(56, 189, 248, 0.15);
+      --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-deep);
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .bg-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .bg-pattern::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background:
+        radial-gradient(ellipse 800px 600px at 20% 30%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 800px at 80% 70%, rgba(129, 140, 248, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 400px 400px at 50% 50%, rgba(192, 132, 252, 0.04) 0%, transparent 50%);
+      animation: bgShift 20s ease-in-out infinite;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(2%, 1%) rotate(1deg); }
+      66% { transform: translate(-1%, 2%) rotate(-1deg); }
+    }
+
+    /* Floating Particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleFloat 15s infinite;
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: 4s; }
+    .particle:nth-child(4) { left: 40%; animation-delay: 1s; }
+    .particle:nth-child(5) { left: 50%; animation-delay: 3s; }
+    .particle:nth-child(6) { left: 60%; animation-delay: 5s; }
+    .particle:nth-child(7) { left: 70%; animation-delay: 2.5s; }
+    .particle:nth-child(8) { left: 80%; animation-delay: 4.5s; }
+    .particle:nth-child(9) { left: 90%; animation-delay: 1.5s; }
+    .particle:nth-child(10) { left: 15%; animation-delay: 3.5s; }
+    .particle:nth-child(11) { left: 85%; animation-delay: 0.5s; }
+    .particle:nth-child(12) { left: 45%; animation-delay: 6s; }
+
+    @keyframes particleFloat {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* Grid Lines Background */
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 50% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    /* Container */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* Animation Classes */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* Header */
+    .report-header {
+      text-align: center;
+      margin-bottom: 60px;
+      position: relative;
+    }
+
+    .report-header::after {
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 2px;
+      background: var(--gradient-premium);
+      border-radius: 2px;
+    }
+
+    .badge-container {
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--accent-cyan);
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      backdrop-filter: blur(10px);
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .company-name {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 3.5rem;
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .report-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
+    }
+
+    /* Executive Summary Card */
+    .executive-summary {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .executive-summary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-premium);
+    }
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .summary-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.1));
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .summary-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+
+    .summary-content {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .summary-content strong {
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .summary-highlight {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      color: var(--accent-amber);
+      font-weight: 500;
+      margin-top: 16px;
+    }
+
+    /* Stats Grid */
+    .stats-section {
+      margin-bottom: 48px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.3s ease,
+                  box-shadow 0.4s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-card.good::before { background: var(--gradient-success); }
+    .stat-card.warning::before { background: var(--gradient-warning); }
+    .stat-card.bad::before { background: var(--gradient-danger); }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stat-value {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 3rem;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-card.good .stat-value { color: var(--accent-emerald); }
+    .stat-card.warning .stat-value { color: var(--accent-amber); }
+    .stat-card.bad .stat-value { color: var(--accent-rose); }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+
+    .stat-progress {
+      margin-top: 16px;
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .stat-progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .stat-card.good .stat-progress-bar {
+      background: var(--gradient-success);
+      width: 96%;
+    }
+    .stat-card.warning .stat-progress-bar {
+      background: var(--gradient-warning);
+      width: 75%;
+    }
+    .stat-card.bad .stat-progress-bar {
+      background: var(--gradient-danger);
+      width: 30%;
+    }
+
+    .stat-card.visible .stat-progress-bar {
+      transform: scaleX(1);
+    }
+
+    /* Section Styling */
+    .section {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .section-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+    }
+
+    .section-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Key Findings */
+    .findings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .finding-item {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .finding-item:hover {
+      transform: translateX(4px);
+    }
+
+    .finding-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+    }
+
+    .finding-item.positive::before { background: var(--gradient-success); }
+    .finding-item.negative::before { background: var(--gradient-danger); }
+
+    .finding-item.positive:hover { border-color: rgba(52, 211, 153, 0.3); }
+    .finding-item.negative:hover { border-color: rgba(251, 113, 133, 0.3); }
+
+    .finding-indicator {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .finding-item.positive .finding-indicator {
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .finding-item.negative .finding-indicator {
+      background: rgba(251, 113, 133, 0.15);
+      border: 1px solid rgba(251, 113, 133, 0.3);
+    }
+
+    .finding-content {
+      flex: 1;
+    }
+
+    .finding-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .finding-item.positive .finding-title { color: var(--accent-emerald); }
+    .finding-item.negative .finding-title { color: var(--accent-rose); }
+
+    .finding-description {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .finding-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .finding-item.positive .finding-tag {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-emerald);
+    }
+
+    .finding-item.negative .finding-tag {
+      background: rgba(251, 113, 133, 0.15);
+      color: var(--accent-rose);
+    }
+
+    /* Competitor Chart */
+    .competitor-chart {
+      margin-bottom: 28px;
+    }
+
+    .chart-container {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 60px;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .chart-row:last-child {
+      border-bottom: none;
+    }
+
+    .chart-row.highlight {
+      background: rgba(56, 189, 248, 0.05);
+      margin: 0 -24px;
+      padding: 16px 24px;
+      border-radius: var(--radius-sm);
+    }
+
+    .chart-company {
+      font-weight: 500;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-row.highlight .chart-company {
+      color: var(--accent-cyan);
+    }
+
+    .you-badge {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--accent-cyan);
+      color: var(--bg-deep);
+      font-weight: 700;
+    }
+
+    .chart-bar-container {
+      height: 32px;
+      background: var(--bg-surface);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-bar {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .chart-bar.visible {
+      transform: scaleX(1);
+    }
+
+    .chart-bar-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--bg-deep);
+      opacity: 0;
+      transition: opacity 0.3s ease 0.8s;
+    }
+
+    .chart-bar.visible .chart-bar-label {
+      opacity: 1;
+    }
+
+    .chart-rank {
+      font-weight: 600;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .chart-rank.bad { color: var(--accent-rose); }
+    .chart-rank.good { color: var(--text-muted); }
+
+    /* Comparison Table */
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .comparison-table thead {
+      position: sticky;
+      top: 0;
+    }
+
+    .comparison-table th {
+      padding: 14px 16px;
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .comparison-table th:first-child {
+      border-radius: var(--radius-sm) 0 0 0;
+    }
+
+    .comparison-table th:last-child {
+      border-radius: 0 var(--radius-sm) 0 0;
+    }
+
+    .comparison-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+
+    .comparison-table tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    .comparison-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .comparison-table tbody tr.you-row {
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .comparison-table tbody tr.you-row:hover {
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .comparison-table .you-cell {
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .comparison-table .bad-cell {
+      color: var(--accent-rose);
+      font-weight: 600;
+    }
+
+    .rating-display {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 2px;
+    }
+
+    .star {
+      font-size: 12px;
+      color: var(--accent-amber);
+    }
+
+    /* CTA Section */
+    .cta-section {
+      position: relative;
+      text-align: center;
+      padding: 56px 48px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-xl);
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse 50% 80% at 50% 120%, rgba(56, 189, 248, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(129, 140, 248, 0.1) 0%, transparent 50%);
+      z-index: 0;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent-cyan);
+      margin-bottom: 20px;
+    }
+
+    .cta-eyebrow::before,
+    .cta-eyebrow::after {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--accent-cyan);
+      opacity: 0.5;
+    }
+
+    .cta-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 2.2rem;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #ffffff 20%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-description {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 36px;
+      background: var(--gradient-premium);
+      color: var(--bg-deep);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(56, 189, 248, 0.3);
+    }
+
+    .cta-button:hover::before {
+      opacity: 1;
+    }
+
+    .cta-button-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .cta-button:hover .cta-button-icon {
+      transform: translateX(4px);
+    }
+
+    .cta-pulse {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--accent-cyan);
+      animation: ctaPulse 2s ease-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes ctaPulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    .cta-subtext {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Footer */
+    .report-footer {
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer-logo {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .footer-link {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 16px 60px;
+      }
+
+      .company-name {
+        font-size: 2.5rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .section {
+        padding: 24px;
+      }
+
+      .chart-row {
+        grid-template-columns: 100px 1fr 50px;
+        gap: 12px;
+      }
+
+      .cta-section {
+        padding: 40px 24px;
+      }
+
+      .cta-title {
+        font-size: 1.75rem;
+      }
+
+      .report-meta {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      cursor: help;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 100;
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Elements -->
+  <div class="bg-pattern"></div>
+  <div class="grid-overlay"></div>
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="report-header reveal">
+      <div class="badge-container">
+        <span class="badge">Free Marketing Audit</span>
+      </div>
+      <h1 class="company-name">Twin Cities Plumbing</h1>
+      <div class="report-meta">
+        <span class="meta-item">
+          <svg class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Minneapolis, MN
+        </span>
+        <span class="meta-item">
+          <svg class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          January 11, 2026
+        </span>
+      </div>
+    </header>
+
+    <!-- Executive Summary -->
+    <section class="executive-summary reveal reveal-delay-1">
+      <div class="summary-header">
+        <div class="summary-icon">&#128202;</div>
+        <h2 class="summary-title">Executive Summary</h2>
+      </div>
+      <p class="summary-content">
+        Your business has <strong>exceptional customer satisfaction</strong> with a 4.8-star rating that outperforms 85% of plumbers in Minneapolis. However, you're currently <strong>ranked #8 in Google Maps</strong> while competitors with lower ratings capture the top positions. This represents a significant revenue opportunity&mdash;businesses in the top 3 positions receive <strong>70% of all clicks</strong>.
+      </p>
+      <div class="summary-highlight">
+        <span>&#9888;&#65039;</span>
+        Estimated missed monthly revenue: $8,000 - $15,000
+      </div>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-section reveal reveal-delay-2">
+      <div class="stats-grid">
+        <div class="stat-card good">
+          <div class="stat-icon">&#11088;</div>
+          <div class="stat-value" data-target="4.8" data-decimal="true">0</div>
+          <div class="stat-label">Google Rating</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"></div>
+          </div>
+        </div>
+        <div class="stat-card good">
+          <div class="stat-icon">&#128172;</div>
+          <div class="stat-value" data-target="127">0</div>
+          <div class="stat-label">Total Reviews</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"></div>
+          </div>
+        </div>
+        <div class="stat-card bad tooltip" data-tooltip="Top 3 positions get 70% of clicks">
+          <div class="stat-icon">&#128205;</div>
+          <div class="stat-value">#<span data-target="8">0</span></div>
+          <div class="stat-label">Map Pack Rank</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Findings -->
+    <section class="section reveal reveal-delay-3">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-icon">&#127919;</div>
+          <h2 class="section-title">Key Findings</h2>
+        </div>
+        <span class="section-badge">4 Items</span>
+      </div>
+      <div class="findings-list">
+        <div class="finding-item positive">
+          <div class="finding-indicator">&#10003;</div>
+          <div class="finding-content">
+            <div class="finding-title">
+              Strong Reputation
+              <span class="finding-tag">Strength</span>
+            </div>
+            <p class="finding-description">Your 4.8 rating beats 85% of plumbers in Minneapolis. Customers love your service&mdash;this is your competitive advantage.</p>
+          </div>
+        </div>
+        <div class="finding-item negative">
+          <div class="finding-indicator">!</div>
+          <div class="finding-content">
+            <div class="finding-title">
+              Visibility Gap
+              <span class="finding-tag">Critical</span>
+            </div>
+            <p class="finding-description">You're not appearing in the Google Map Pack for "plumber Minneapolis" despite having better reviews than competitors who are.</p>
+          </div>
+        </div>
+        <div class="finding-item negative">
+          <div class="finding-indicator">!</div>
+          <div class="finding-content">
+            <div class="finding-title">
+              Missing Website SEO
+              <span class="finding-tag">Opportunity</span>
+            </div>
+            <p class="finding-description">Your site isn't optimized for "emergency plumber" searches which get 2,400 monthly searches in your area.</p>
+          </div>
+        </div>
+        <div class="finding-item negative">
+          <div class="finding-indicator">!</div>
+          <div class="finding-content">
+            <div class="finding-title">
+              No Online Booking
+              <span class="finding-tag">Opportunity</span>
+            </div>
+            <p class="finding-description">73% of customers prefer booking online. Your competitors offer this&mdash;you're losing convenience-driven customers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Competitor Comparison -->
+    <section class="section reveal reveal-delay-4">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-icon">&#128200;</div>
+          <h2 class="section-title">Competitor Comparison</h2>
+        </div>
+        <span class="section-badge">Rating vs Rank</span>
+      </div>
+
+      <!-- Visual Chart -->
+      <div class="competitor-chart">
+        <div class="chart-container">
+          <div class="chart-row">
+            <div class="chart-company">Roto-Rooter</div>
+            <div class="chart-bar-container">
+              <div class="chart-bar" style="width: 84%; background: linear-gradient(90deg, #64748b, #94a3b8);">
+                <span class="chart-bar-label">4.2</span>
+              </div>
+            </div>
+            <div class="chart-rank good">#1</div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-company">Hero Plumbing</div>
+            <div class="chart-bar-container">
+              <div class="chart-bar" style="width: 90%; background: linear-gradient(90deg, #64748b, #94a3b8);">
+                <span class="chart-bar-label">4.5</span>
+              </div>
+            </div>
+            <div class="chart-rank good">#2</div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-company">Minneapolis Plumbing</div>
+            <div class="chart-bar-container">
+              <div class="chart-bar" style="width: 92%; background: linear-gradient(90deg, #64748b, #94a3b8);">
+                <span class="chart-bar-label">4.6</span>
+              </div>
+            </div>
+            <div class="chart-rank good">#3</div>
+          </div>
+          <div class="chart-row highlight">
+            <div class="chart-company">
+              Twin Cities Plumbing
+              <span class="you-badge">You</span>
+            </div>
+            <div class="chart-bar-container">
+              <div class="chart-bar" style="width: 96%; background: var(--gradient-premium);">
+                <span class="chart-bar-label">4.8</span>
+              </div>
+            </div>
+            <div class="chart-rank bad">#8</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Table -->
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Rating</th>
+            <th>Reviews</th>
+            <th>Map Rank</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Roto-Rooter</td>
+            <td>
+              <div class="rating-display">
+                <span>4.2</span>
+                <div class="rating-stars">
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star" style="opacity: 0.3;">&#9733;</span>
+                </div>
+              </div>
+            </td>
+            <td>89</td>
+            <td>#1</td>
+          </tr>
+          <tr>
+            <td>Hero Plumbing</td>
+            <td>
+              <div class="rating-display">
+                <span>4.5</span>
+                <div class="rating-stars">
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star" style="opacity: 0.5;">&#9733;</span>
+                </div>
+              </div>
+            </td>
+            <td>203</td>
+            <td>#2</td>
+          </tr>
+          <tr>
+            <td>Minneapolis Plumbing</td>
+            <td>
+              <div class="rating-display">
+                <span>4.6</span>
+                <div class="rating-stars">
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star" style="opacity: 0.6;">&#9733;</span>
+                </div>
+              </div>
+            </td>
+            <td>156</td>
+            <td>#3</td>
+          </tr>
+          <tr class="you-row">
+            <td class="you-cell">Twin Cities Plumbing</td>
+            <td>
+              <div class="rating-display">
+                <span class="you-cell">4.8</span>
+                <div class="rating-stars">
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star">&#9733;</span>
+                  <span class="star" style="opacity: 0.8;">&#9733;</span>
+                </div>
+              </div>
+            </td>
+            <td class="you-cell">127</td>
+            <td class="bad-cell">#8</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section reveal">
+      <div class="cta-content">
+        <div class="cta-eyebrow">The Opportunity</div>
+        <h2 class="cta-title">You Have Better Reviews<br>Than Your Competitors</h2>
+        <p class="cta-description">But they're getting the customers. Let's fix that with a clear action plan.</p>
+        <a href="#" class="cta-button">
+          <span>Schedule Free Strategy Call</span>
+          <span class="cta-button-icon">&#8594;</span>
+          <div class="cta-pulse"></div>
+        </a>
+        <p class="cta-subtext">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          15 minutes &bull; No obligation &bull; Custom recommendations
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="report-footer reveal">
+      <div class="footer-logo">Prospect Intelligence Hub</div>
+      <p class="footer-text">
+        Data sources: Google Business Profile, Yelp, Public Records<br>
+        Report generated automatically for lead qualification
+      </p>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <a href="#" class="footer-link">How We Calculate Scores</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Trigger counter animations for stat cards
+          if (entry.target.classList.contains('stat-card') || entry.target.classList.contains('stats-section')) {
+            animateCounters();
+          }
+
+          // Trigger chart bar animations
+          if (entry.target.querySelector('.chart-bar')) {
+            entry.target.querySelectorAll('.chart-bar').forEach((bar, index) => {
+              setTimeout(() => {
+                bar.classList.add('visible');
+              }, index * 150);
+            });
+          }
+        }
+      });
+    }, observerOptions);
+
+    // Observe all reveal elements
+    document.querySelectorAll('.reveal, .stat-card, .section').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Animated counter function
+    function animateCounters() {
+      document.querySelectorAll('.stat-value[data-target]').forEach(counter => {
+        if (counter.dataset.animated) return;
+        counter.dataset.animated = 'true';
+
+        const target = parseFloat(counter.dataset.target);
+        const isDecimal = counter.dataset.decimal === 'true';
+        const duration = 2000;
+        const startTime = performance.now();
+
+        function updateCounter(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          const current = target * easeOut;
+
+          if (isDecimal) {
+            counter.textContent = current.toFixed(1);
+          } else {
+            counter.textContent = Math.floor(current);
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+          } else {
+            if (isDecimal) {
+              counter.textContent = target.toFixed(1);
+            } else {
+              counter.textContent = target;
+            }
+          }
+        }
+
+        requestAnimationFrame(updateCounter);
+      });
+    }
+
+    // Add smooth hover effects to finding items
+    document.querySelectorAll('.finding-item').forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        item.style.transform = 'translateX(8px)';
+      });
+      item.addEventListener('mouseleave', () => {
+        item.style.transform = 'translateX(0)';
+      });
+    });
+
+    // Parallax effect for background
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrolled = window.pageYOffset;
+          const bgPattern = document.querySelector('.bg-pattern::before');
+          if (bgPattern) {
+            bgPattern.style.transform = `translateY(${scrolled * 0.1}px)`;
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    // Initialize page with slight delay for smooth load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.querySelectorAll('.reveal').forEach((el, index) => {
+          setTimeout(() => {
+            el.classList.add('visible');
+          }, index * 100);
+        });
+      }, 100);
+    });
+  </script>
+</body>
+</html>
