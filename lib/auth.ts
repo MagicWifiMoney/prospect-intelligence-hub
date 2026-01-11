@@ -37,6 +37,7 @@ export const authOptions = {
           email: user.email,
           name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
           role: user.role,
+          onboardingCompleted: user.onboardingCompleted,
         }
       }
     })
@@ -48,6 +49,7 @@ export const authOptions = {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.role = user.role
+        token.onboardingCompleted = user.onboardingCompleted
       }
       return token
     },
@@ -55,6 +57,7 @@ export const authOptions = {
       if (token) {
         session.user.id = token.sub
         session.user.role = token.role
+        session.user.onboardingCompleted = token.onboardingCompleted
       }
       return session
     },

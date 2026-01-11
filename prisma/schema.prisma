@@ -50,6 +50,16 @@ model User {
   googleToken   GoogleToken?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  // Onboarding fields
+  onboardingCompleted Boolean   @default(false)
+  businessUrl         String?
+  businessName        String?
+  detectedIndustry    String?
+  targetIndustries    String[]
+  targetCities        String[]
+  userGoal            String?   // "find_leads", "monitor_competitors", "grow_agency"
+  dashboardConfig     Json?     // Personalized dashboard settings
 }
 
 model VerificationToken {

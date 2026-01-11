@@ -77,7 +77,8 @@ export function SignUpForm() {
       if (result?.error) {
         setError('Account created but sign in failed')
       } else {
-        router.push('/dashboard')
+        // New users go to onboarding first
+        router.push('/onboarding')
       }
     } catch (error: any) {
       setError(error.message || 'Something went wrong')
