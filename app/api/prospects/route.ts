@@ -5,11 +5,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause, getProspectAssignment } from '@/lib/data-isolation'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -26,8 +33,10 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Build where clause
-    const where: any = {}
+    // Build where clause with data isolation
+    const where: any = {
+      ...buildProspectWhereClause(scope),
+    }
 
     if (search) {
       where.OR = [
@@ -118,6 +127,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get user's data scope for assignment
+    const scope = await getDataScope()
+    if (!scope) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const {
       companyName,
@@ -138,13 +153,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if prospect already exists
-    const existingProspect = placeId 
-      ? await prisma.prospect.findUnique({ where: { placeId } })
+    // Check if prospect already exists within user's scope
+    const existingProspect = placeId
+      ? await prisma.prospect.findFirst({
+          where: {
+            placeId,
+            ...buildProspectWhereClause(scope),
+          }
+        })
       : await prisma.prospect.findFirst({
           where: {
             companyName,
             city: city || undefined,
+            ...buildProspectWhereClause(scope),
           },
         })
 
@@ -155,6 +176,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Create prospect with data isolation assignment
     const prospect = await prisma.prospect.create({
       data: {
         companyName,
@@ -167,6 +189,7 @@ export async function POST(request: NextRequest) {
         gbpUrl,
         placeId,
         dataSource: 'Manual Entry',
+        ...getProspectAssignment(scope),
       },
     })
 

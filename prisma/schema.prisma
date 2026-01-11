@@ -60,6 +60,42 @@ model User {
   targetCities        String[]
   userGoal            String?   // "find_leads", "monitor_competitors", "grow_agency"
   dashboardConfig     Json?     // Personalized dashboard settings
+
+  // Multi-tenancy: Organization membership
+  organizationId      String?
+  organization        Organization? @relation(fields: [organizationId], references: [id])
+  orgRole             String        @default("member") // "owner", "admin", "member"
+
+  // User's own prospects (when not in an org)
+  prospects           Prospect[]
+}
+
+// ============================================
+// Multi-Tenancy: Organizations & Teams
+// ============================================
+
+model Organization {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  members     User[]
+  prospects   Prospect[] @relation("OrganizationProspects")
+  invites     Invite[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Invite {
+  id             String       @id @default(cuid())
+  email          String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           String       @default("member") // "admin", "member"
+  token          String       @unique @default(cuid())
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+
+  @@unique([email, organizationId])
 }
 
 model VerificationToken {
@@ -115,6 +151,12 @@ model Prospect {
   historicalData        ProspectHistorical[]
   reviews               ProspectReview[]
   activities            ProspectActivity[]
+
+  // Multi-tenancy: Data isolation
+  userId                String?
+  user                  User?                 @relation(fields: [userId], references: [id])
+  organizationId        String?
+  organization          Organization?         @relation("OrganizationProspects", fields: [organizationId], references: [id])
 
   // Enhanced scoring fields
   highTicketScore       Int?                  // 0-100: Commercial/B2B potential
