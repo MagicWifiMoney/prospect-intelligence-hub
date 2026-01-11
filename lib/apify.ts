@@ -10,17 +10,17 @@ export const APIFY_ACTORS = {
   CONTACT_SCRAPER: 'vdrmota/contact-info-scraper',              // Website contact extraction
   LEADS_FINDER: 'code_crafter/leads-finder',                    // Apollo-style decision maker lookup
   BUILTWITH: 'canadesk/builtwith',                              // Tech stack detection
-  
+
   // Directory scrapers (Phase 2)
   YELP_LISTINGS: 'jupri/yelp',
   YELP_REVIEWS: 'delicious_zebu/yelp-reviews-scraper',
   ANGI: 'igolaizola/angi-scraper',
   YELLOW_PAGES: 'trudax/yellow-pages-us-scraper',
-  
+
   // Social scrapers (Phase 3)
   FACEBOOK_PAGES: 'apify/facebook-pages-scraper',
   LINKEDIN_COMPANY: 'apimaestro/linkedin-company-detail',
-  
+
   // Legacy/bonus
   GOOGLE_SEARCH: 'apify/google-search-scraper',
   GOOGLE_REVIEWS_DEEP: 'compass/Google-Maps-Reviews-Scraper',
@@ -142,6 +142,27 @@ export interface BuiltWithResult {
   widgets?: string[]
   ecommerce?: string
   hosting?: string
+}
+
+// Yelp result (from jupri/yelp)
+export interface YelpResult {
+  name: string
+  url?: string
+  rating?: number
+  reviewCount?: number
+  price?: string           // $, $$, $$$, $$$$
+  phone?: string
+  address?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  categories?: string[]
+  neighborhood?: string
+  latitude?: number
+  longitude?: number
+  isClaimed?: boolean
+  isOpen?: boolean
+  photos?: string[]
 }
 
 interface ApifyRunResult {
@@ -286,11 +307,11 @@ export async function importGoogleMapsResults(
 
       const existingByName = !existingByPlaceId
         ? await prisma.prospect.findFirst({
-            where: {
-              companyName: { equals: result.title, mode: 'insensitive' },
-              city: { equals: result.city || '', mode: 'insensitive' },
-            },
-          })
+          where: {
+            companyName: { equals: result.title, mode: 'insensitive' },
+            city: { equals: result.city || '', mode: 'insensitive' },
+          },
+        })
         : null
 
       if (existingByPlaceId || existingByName) {
@@ -316,7 +337,7 @@ export async function importGoogleMapsResults(
         ...(result.emails || []),
         ...(result.contactInfo?.emails || []),
       ].filter(Boolean) as string[]
-      
+
       const primaryEmail = allEmails[0] || null
       const additionalEmails = allEmails.slice(1)
 
@@ -513,7 +534,7 @@ export async function enrichProspectWithContacts(
   const existingEmails = [prospect.email, ...(prospect.additionalEmails || [])].filter(Boolean) as string[]
   const newEmails = contactData.emails || []
   const allEmails = [...new Set([...existingEmails, ...newEmails])]
-  
+
   const primaryEmail = allEmails[0] || null
   const additionalEmails = allEmails.slice(1)
 
@@ -546,7 +567,7 @@ export async function enrichProspectWithDecisionMaker(
   const contact = leadsData.contacts?.[0]
   if (!contact) return
 
-  const sources = await prisma.prospect.findUnique({ 
+  const sources = await prisma.prospect.findUnique({
     where: { id: prospectId },
     select: { enrichmentSources: true }
   })
@@ -573,28 +594,28 @@ export async function enrichProspectWithTechStack(
   techData: BuiltWithResult
 ): Promise<void> {
   const techs = techData.technologies || []
-  
+
   // Categorize technologies
-  const cms = techs.find(t => 
-    t.category?.toLowerCase().includes('cms') || 
+  const cms = techs.find(t =>
+    t.category?.toLowerCase().includes('cms') ||
     ['wordpress', 'wix', 'squarespace', 'shopify', 'webflow', 'drupal', 'joomla'].some(
       c => t.name?.toLowerCase().includes(c)
     )
   )
-  
-  const analytics = techs.filter(t => 
+
+  const analytics = techs.filter(t =>
     t.category?.toLowerCase().includes('analytics') ||
     t.name?.toLowerCase().includes('analytics') ||
     t.name?.toLowerCase().includes('tag manager')
   )
-  
+
   const liveChat = techs.find(t =>
     t.category?.toLowerCase().includes('chat') ||
     ['intercom', 'drift', 'zendesk', 'freshchat', 'tawk', 'livechat'].some(
       c => t.name?.toLowerCase().includes(c)
     )
   )
-  
+
   const ecommerce = techs.find(t =>
     t.category?.toLowerCase().includes('ecommerce') ||
     ['shopify', 'woocommerce', 'bigcommerce', 'magento'].some(
@@ -614,7 +635,7 @@ export async function enrichProspectWithTechStack(
     )
   )
 
-  const sources = await prisma.prospect.findUnique({ 
+  const sources = await prisma.prospect.findUnique({
     where: { id: prospectId },
     select: { enrichmentSources: true }
   })
@@ -666,3 +687,142 @@ export async function getProspectsNeedingEnrichment(
 
   return prospects.filter(p => p.website) as Array<{ id: string; companyName: string; website: string }>
 }
+
+// ============================================
+// PHASE 2: Yelp Integration Functions
+// ============================================
+
+/**
+ * Scrape Yelp for business listings
+ * Uses: jupri/yelp
+ */
+export async function scrapeYelp(
+  searchQuery: string,
+  location: string,
+  maxResults: number = 50
+): Promise<ApifyRunResult> {
+  const input = {
+    searchTerms: [searchQuery],
+    locations: [location],
+    maxItems: maxResults,
+    includeReviews: false,
+    reviewsLimit: 0,
+  }
+
+  return startApifyRun(APIFY_ACTORS.YELP_LISTINGS, input)
+}
+
+/**
+ * Match a Yelp result to an existing prospect by phone or address
+ */
+export async function matchYelpToProspect(
+  yelpData: YelpResult,
+  scopeFilter: { userId?: string; organizationId?: string | null }
+): Promise<string | null> {
+  // Clean phone number for matching (remove non-digits)
+  const cleanPhone = yelpData.phone?.replace(/\D/g, '') || null
+
+  // Try to find by phone number first (most reliable)
+  if (cleanPhone && cleanPhone.length >= 10) {
+    const byPhone = await prisma.prospect.findFirst({
+      where: {
+        phone: { contains: cleanPhone.slice(-10) }, // Match last 10 digits
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byPhone) return byPhone.id
+  }
+
+  // Try to find by company name + city (fuzzy match)
+  if (yelpData.name && yelpData.city) {
+    const byNameCity = await prisma.prospect.findFirst({
+      where: {
+        companyName: { contains: yelpData.name.split(' ')[0], mode: 'insensitive' },
+        city: { contains: yelpData.city, mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byNameCity) return byNameCity.id
+  }
+
+  return null
+}
+
+/**
+ * Enrich a prospect with Yelp data
+ */
+export async function enrichProspectWithYelp(
+  prospectId: string,
+  yelpData: YelpResult
+): Promise<void> {
+  const sources = await prisma.prospect.findUnique({
+    where: { id: prospectId },
+    select: { enrichmentSources: true },
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      yelpUrl: yelpData.url || undefined,
+      yelpRating: yelpData.rating || undefined,
+      yelpReviewCount: yelpData.reviewCount || undefined,
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'yelp'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Import Yelp results - match with existing prospects or create new ones
+ */
+export async function importYelpResults(
+  results: YelpResult[],
+  scopeFilter: { userId: string; organizationId: string | null }
+): Promise<{ matched: number; created: number; errors: number }> {
+  let matched = 0
+  let created = 0
+  let errors = 0
+
+  for (const result of results) {
+    try {
+      // Try to match with existing prospect
+      const existingId = await matchYelpToProspect(result, scopeFilter)
+
+      if (existingId) {
+        // Enrich existing prospect
+        await enrichProspectWithYelp(existingId, result)
+        matched++
+      } else {
+        // Create new prospect from Yelp data
+        await prisma.prospect.create({
+          data: {
+            companyName: result.name,
+            businessType: result.categories?.[0] || null,
+            categories: result.categories?.join(', ') || null,
+            address: result.address || null,
+            city: result.city || null,
+            phone: result.phone || null,
+            yelpUrl: result.url || null,
+            yelpRating: result.rating || null,
+            yelpReviewCount: result.reviewCount || null,
+            dataSource: 'yelp',
+            dateCollected: new Date(),
+            enrichmentSources: ['yelp'],
+            enrichedAt: new Date(),
+            userId: scopeFilter.userId,
+            organizationId: scopeFilter.organizationId,
+          },
+        })
+        created++
+      }
+    } catch (error) {
+      console.error('Error processing Yelp result:', error)
+      errors++
+    }
+  }
+
+  return { matched, created, errors }
+}
+
