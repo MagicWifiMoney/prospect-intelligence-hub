@@ -165,6 +165,43 @@ export interface YelpResult {
   photos?: string[]
 }
 
+// Angi result (from igolaizola/angi-scraper)
+export interface AngiResult {
+  name: string
+  url?: string
+  rating?: number
+  reviewCount?: number
+  phone?: string
+  address?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  categories?: string[]
+  yearsInBusiness?: number
+  hireRate?: number        // Percentage of users who hired
+  responseTime?: string    // e.g., "within a day"
+  license?: string
+  description?: string
+}
+
+// Yellow Pages result (from trudax/yellow-pages-us-scraper)
+export interface YellowPagesResult {
+  name: string
+  url?: string
+  rating?: number
+  reviewCount?: number
+  phone?: string
+  address?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  categories?: string[]
+  yearsInBusiness?: number
+  website?: string
+  hours?: string
+  description?: string
+}
+
 interface ApifyRunResult {
   id: string
   status: string
@@ -825,4 +862,252 @@ export async function importYelpResults(
 
   return { matched, created, errors }
 }
+
+// ============================================
+// PHASE 2: Angi Integration Functions
+// ============================================
+
+/**
+ * Scrape Angi for business listings
+ * Uses: igolaizola/angi-scraper
+ */
+export async function scrapeAngi(
+  searchQuery: string,
+  location: string,
+  maxResults: number = 50
+): Promise<ApifyRunResult> {
+  const input = {
+    search: searchQuery,
+    location: location,
+    maxItems: maxResults,
+  }
+
+  return startApifyRun(APIFY_ACTORS.ANGI, input)
+}
+
+/**
+ * Match an Angi result to an existing prospect
+ */
+export async function matchAngiToProspect(
+  angiData: AngiResult,
+  scopeFilter: { userId?: string; organizationId?: string | null }
+): Promise<string | null> {
+  const cleanPhone = angiData.phone?.replace(/\D/g, '') || null
+
+  if (cleanPhone && cleanPhone.length >= 10) {
+    const byPhone = await prisma.prospect.findFirst({
+      where: {
+        phone: { contains: cleanPhone.slice(-10) },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byPhone) return byPhone.id
+  }
+
+  if (angiData.name && angiData.city) {
+    const byNameCity = await prisma.prospect.findFirst({
+      where: {
+        companyName: { contains: angiData.name.split(' ')[0], mode: 'insensitive' },
+        city: { contains: angiData.city, mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byNameCity) return byNameCity.id
+  }
+
+  return null
+}
+
+/**
+ * Enrich a prospect with Angi data
+ */
+export async function enrichProspectWithAngi(
+  prospectId: string,
+  angiData: AngiResult
+): Promise<void> {
+  const sources = await prisma.prospect.findUnique({
+    where: { id: prospectId },
+    select: { enrichmentSources: true },
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      angiRating: angiData.rating || undefined,
+      angiReviewCount: angiData.reviewCount || undefined,
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'angi'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Import Angi results
+ */
+export async function importAngiResults(
+  results: AngiResult[],
+  scopeFilter: { userId: string; organizationId: string | null }
+): Promise<{ matched: number; created: number; errors: number }> {
+  let matched = 0
+  let created = 0
+  let errors = 0
+
+  for (const result of results) {
+    try {
+      const existingId = await matchAngiToProspect(result, scopeFilter)
+
+      if (existingId) {
+        await enrichProspectWithAngi(existingId, result)
+        matched++
+      } else {
+        await prisma.prospect.create({
+          data: {
+            companyName: result.name,
+            businessType: result.categories?.[0] || null,
+            categories: result.categories?.join(', ') || null,
+            address: result.address || null,
+            city: result.city || null,
+            phone: result.phone || null,
+            angiRating: result.rating || null,
+            angiReviewCount: result.reviewCount || null,
+            yearsInBusiness: result.yearsInBusiness || null,
+            dataSource: 'angi',
+            dateCollected: new Date(),
+            enrichmentSources: ['angi'],
+            enrichedAt: new Date(),
+            userId: scopeFilter.userId,
+            organizationId: scopeFilter.organizationId,
+          },
+        })
+        created++
+      }
+    } catch (error) {
+      console.error('Error processing Angi result:', error)
+      errors++
+    }
+  }
+
+  return { matched, created, errors }
+}
+
+// ============================================
+// PHASE 2: Yellow Pages Integration Functions
+// ============================================
+
+/**
+ * Scrape Yellow Pages for business listings
+ * Uses: trudax/yellow-pages-us-scraper
+ */
+export async function scrapeYellowPages(
+  searchQuery: string,
+  location: string,
+  maxResults: number = 50
+): Promise<ApifyRunResult> {
+  const input = {
+    search: searchQuery,
+    location: location,
+    maxItems: maxResults,
+  }
+
+  return startApifyRun(APIFY_ACTORS.YELLOW_PAGES, input)
+}
+
+/**
+ * Match a Yellow Pages result to an existing prospect
+ */
+export async function matchYellowPagesToProspect(
+  ypData: YellowPagesResult,
+  scopeFilter: { userId?: string; organizationId?: string | null }
+): Promise<string | null> {
+  const cleanPhone = ypData.phone?.replace(/\D/g, '') || null
+
+  if (cleanPhone && cleanPhone.length >= 10) {
+    const byPhone = await prisma.prospect.findFirst({
+      where: {
+        phone: { contains: cleanPhone.slice(-10) },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byPhone) return byPhone.id
+  }
+
+  if (ypData.name && ypData.city) {
+    const byNameCity = await prisma.prospect.findFirst({
+      where: {
+        companyName: { contains: ypData.name.split(' ')[0], mode: 'insensitive' },
+        city: { contains: ypData.city, mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byNameCity) return byNameCity.id
+  }
+
+  return null
+}
+
+/**
+ * Import Yellow Pages results
+ */
+export async function importYellowPagesResults(
+  results: YellowPagesResult[],
+  scopeFilter: { userId: string; organizationId: string | null }
+): Promise<{ matched: number; created: number; errors: number }> {
+  let matched = 0
+  let created = 0
+  let errors = 0
+
+  for (const result of results) {
+    try {
+      const existingId = await matchYellowPagesToProspect(result, scopeFilter)
+
+      if (existingId) {
+        // Yellow Pages enrichment - just add to sources
+        const sources = await prisma.prospect.findUnique({
+          where: { id: existingId },
+          select: { enrichmentSources: true, website: true },
+        })
+
+        await prisma.prospect.update({
+          where: { id: existingId },
+          data: {
+            website: sources?.website || result.website || undefined,
+            enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'yellow_pages'])],
+            enrichedAt: new Date(),
+          },
+        })
+        matched++
+      } else {
+        await prisma.prospect.create({
+          data: {
+            companyName: result.name,
+            businessType: result.categories?.[0] || null,
+            categories: result.categories?.join(', ') || null,
+            address: result.address || null,
+            city: result.city || null,
+            phone: result.phone || null,
+            website: result.website || null,
+            yearsInBusiness: result.yearsInBusiness || null,
+            dataSource: 'yellow_pages',
+            dateCollected: new Date(),
+            enrichmentSources: ['yellow_pages'],
+            enrichedAt: new Date(),
+            userId: scopeFilter.userId,
+            organizationId: scopeFilter.organizationId,
+          },
+        })
+        created++
+      }
+    } catch (error) {
+      console.error('Error processing Yellow Pages result:', error)
+      errors++
+    }
+  }
+
+  return { matched, created, errors }
+}
+
 
