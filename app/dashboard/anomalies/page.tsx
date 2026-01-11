@@ -23,18 +23,34 @@ import {
 } from 'lucide-react'
 
 interface Prospect {
-  id: number
-  business_name: string
+  id: string
+  companyName: string
   phone?: string
   website?: string
-  gmb_url?: string
-  total_reviews?: number
-  recent_reviews?: number
-  average_rating?: number
-  anomaly_flags: string[]
-  lead_score?: number
+  gbpUrl?: string
+  reviewCount?: number
+  googleRating?: number
+  anomaliesDetected?: string
+  leadScore?: number
   city?: string
-  category?: string
+  businessType?: string
+  isHotLead?: boolean
+}
+
+// Helper to parse anomaliesDetected string into array
+const parseAnomalyFlags = (anomaliesDetected?: string): string[] => {
+  if (!anomaliesDetected) return []
+  // Map the stored anomaly descriptions to our internal flag names
+  return anomaliesDetected.split(', ').map(flag => {
+    const lowerFlag = flag.toLowerCase()
+    if (lowerFlag.includes('no website') || lowerFlag.includes('missing website')) return 'no_website'
+    if (lowerFlag.includes('personal') || lowerFlag.includes('cell')) return 'personal_phone'
+    if (lowerFlag.includes('spike') || lowerFlag.includes('surge')) return 'review_spike'
+    if (lowerFlag.includes('drop') || lowerFlag.includes('declin')) return 'review_drop'
+    if (lowerFlag.includes('low rating') || lowerFlag.includes('poor rating')) return 'low_rating'
+    if (lowerFlag.includes('low review') || lowerFlag.includes('few review')) return 'low_reviews'
+    return flag
+  })
 }
 
 export default function AnomaliesPage() {
@@ -54,7 +70,7 @@ export default function AnomaliesPage() {
 
   const fetchAnomalies = async () => {
     try {
-      const response = await fetch('/api/prospects?anomalies_only=true')
+      const response = await fetch('/api/prospects?hasAnomalies=true&limit=100')
       if (!response.ok) throw new Error('Failed to fetch anomalies')
       const data = await response.json()
       setProspects(data.prospects || [])
@@ -71,16 +87,17 @@ export default function AnomaliesPage() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(p =>
-        p.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.city?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
     // Anomaly type filter
     if (anomalyFilter !== 'all') {
-      filtered = filtered.filter(p =>
-        p.anomaly_flags.includes(anomalyFilter)
-      )
+      filtered = filtered.filter(p => {
+        const flags = parseAnomalyFlags(p.anomaliesDetected)
+        return flags.includes(anomalyFilter)
+      })
     }
 
     setFilteredProspects(filtered)
@@ -121,11 +138,11 @@ export default function AnomaliesPage() {
   }
 
   const anomalyCounts = {
-    no_website: prospects.filter(p => p.anomaly_flags.includes('no_website')).length,
-    personal_phone: prospects.filter(p => p.anomaly_flags.includes('personal_phone')).length,
-    review_spike: prospects.filter(p => p.anomaly_flags.includes('review_spike')).length,
-    review_drop: prospects.filter(p => p.anomaly_flags.includes('review_drop')).length,
-    low_rating: prospects.filter(p => p.anomaly_flags.includes('low_rating')).length,
+    no_website: prospects.filter(p => parseAnomalyFlags(p.anomaliesDetected).includes('no_website')).length,
+    personal_phone: prospects.filter(p => parseAnomalyFlags(p.anomaliesDetected).includes('personal_phone')).length,
+    review_spike: prospects.filter(p => parseAnomalyFlags(p.anomaliesDetected).includes('review_spike')).length,
+    review_drop: prospects.filter(p => parseAnomalyFlags(p.anomaliesDetected).includes('review_drop')).length,
+    low_rating: prospects.filter(p => parseAnomalyFlags(p.anomaliesDetected).includes('low_rating')).length,
   }
 
   if (loading) {
@@ -273,88 +290,90 @@ export default function AnomaliesPage() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {filteredProspects.map((prospect) => (
-              <div key={prospect.id} className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1">{prospect.business_name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {prospect.city && `${prospect.city} • `}
-                      {prospect.category}
-                      {prospect.lead_score !== undefined && ` • Score: ${prospect.lead_score}`}
-                    </p>
-                  </div>
-                  {prospect.lead_score !== undefined && (
-                    <Badge className={prospect.lead_score >= 70 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-white/10 text-gray-300 border-white/20'}>
-                      {prospect.lead_score >= 70 ? 'Hot Lead' : 'Prospect'}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  {/* Anomaly Flags */}
-                  <div className="flex flex-wrap gap-2">
-                    {prospect.anomaly_flags.map((flag) => (
-                      <Badge key={flag} className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1">
-                        {getAnomalyIcon(flag)}
-                        {getAnomalyLabel(flag)}
+            {filteredProspects.map((prospect) => {
+              const anomalyFlags = parseAnomalyFlags(prospect.anomaliesDetected)
+              return (
+                <div key={prospect.id} className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-1">{prospect.companyName}</h3>
+                      <p className="text-sm text-gray-500">
+                        {prospect.city && `${prospect.city} • `}
+                        {prospect.businessType}
+                        {prospect.leadScore !== undefined && ` • Score: ${prospect.leadScore}`}
+                      </p>
+                    </div>
+                    {prospect.isHotLead && (
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                        Hot Lead
                       </Badge>
-                    ))}
-                  </div>
-
-                  {/* Business Info */}
-                  <div className="grid gap-2 text-sm">
-                    {prospect.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-300">{prospect.phone}</span>
-                      </div>
-                    )}
-                    {prospect.website && (
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-gray-500" />
-                        <a
-                          href={prospect.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-cyan-400 hover:underline flex items-center gap-1"
-                        >
-                          {prospect.website}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
-                    {!prospect.website && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Globe className="h-4 w-4" />
-                        <span>No website available</span>
-                      </div>
                     )}
                   </div>
 
-                  {/* Review Stats */}
-                  {prospect.total_reviews !== undefined && (
-                    <div className="flex gap-4 text-sm text-gray-500">
-                      <span>{prospect.total_reviews} total reviews</span>
-                      <span>{prospect.recent_reviews} recent reviews</span>
-                      {prospect.average_rating && (
-                        <span className="text-amber-400">⭐ {prospect.average_rating.toFixed(1)}</span>
+                  <div className="space-y-4">
+                    {/* Anomaly Flags */}
+                    <div className="flex flex-wrap gap-2">
+                      {anomalyFlags.map((flag) => (
+                        <Badge key={flag} className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1">
+                          {getAnomalyIcon(flag)}
+                          {getAnomalyLabel(flag)}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* Business Info */}
+                    <div className="grid gap-2 text-sm">
+                      {prospect.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-500" />
+                          <span className="text-gray-300">{prospect.phone}</span>
+                        </div>
+                      )}
+                      {prospect.website && (
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-gray-500" />
+                          <a
+                            href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan-400 hover:underline flex items-center gap-1"
+                          >
+                            {prospect.website}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                      {!prospect.website && (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Globe className="h-4 w-4" />
+                          <span>No website available</span>
+                        </div>
                       )}
                     </div>
-                  )}
 
-                  {/* Actions */}
-                  {prospect.gmb_url && (
-                    <Button variant="outline" size="sm" asChild className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
-                      <a href={prospect.gmb_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View on Google Maps
-                      </a>
-                    </Button>
-                  )}
+                    {/* Review Stats */}
+                    {prospect.reviewCount !== undefined && (
+                      <div className="flex gap-4 text-sm text-gray-500">
+                        <span>{prospect.reviewCount} reviews</span>
+                        {prospect.googleRating && (
+                          <span className="text-amber-400">⭐ {prospect.googleRating.toFixed(1)}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    {prospect.gbpUrl && (
+                      <Button variant="outline" size="sm" asChild className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
+                        <a href={prospect.gbpUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View on Google Maps
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
