@@ -1,0 +1,237 @@
+{
+  "agent": "Agent-2-Database",
+  "timestamp": "2026-01-10T22:27:19.787Z",
+  "results": {
+    "tablesFound": 16,
+    "tablesExpected": 15,
+    "missingTables": [],
+    "recordCounts": {
+      "User": 6,
+      "Account": 0,
+      "Session": 0,
+      "VerificationToken": 0,
+      "Prospect": 3740,
+      "ProspectHistorical": 0,
+      "ProspectReview": 0,
+      "ProspectActivity": 0,
+      "MarketTrend": 3,
+      "NewBusiness": 0,
+      "LeadGenOpportunity": 0,
+      "EmailTemplate": 0,
+      "SentEmail": 0,
+      "GoogleToken": 0,
+      "SystemJob": 2
+    },
+    "seedData": "PRESENT",
+    "indexes": {
+      "status": "PASS",
+      "details": [
+        {
+          "indexname": "Account_pkey",
+          "tablename": "Account",
+          "indexdef": "CREATE UNIQUE INDEX \"Account_pkey\" ON public.\"Account\" USING btree (id)"
+        },
+        {
+          "indexname": "Account_provider_providerAccountId_key",
+          "tablename": "Account",
+          "indexdef": "CREATE UNIQUE INDEX \"Account_provider_providerAccountId_key\" ON public.\"Account\" USING btree (provider, \"providerAccountId\")"
+        },
+        {
+          "indexname": "EmailTemplate_pkey",
+          "tablename": "EmailTemplate",
+          "indexdef": "CREATE UNIQUE INDEX \"EmailTemplate_pkey\" ON public.\"EmailTemplate\" USING btree (id)"
+        },
+        {
+          "indexname": "GoogleToken_pkey",
+          "tablename": "GoogleToken",
+          "indexdef": "CREATE UNIQUE INDEX \"GoogleToken_pkey\" ON public.\"GoogleToken\" USING btree (id)"
+        },
+        {
+          "indexname": "GoogleToken_userId_key",
+          "tablename": "GoogleToken",
+          "indexdef": "CREATE UNIQUE INDEX \"GoogleToken_userId_key\" ON public.\"GoogleToken\" USING btree (\"userId\")"
+        },
+        {
+          "indexname": "LeadGenOpportunity_category_city_key",
+          "tablename": "LeadGenOpportunity",
+          "indexdef": "CREATE UNIQUE INDEX \"LeadGenOpportunity_category_city_key\" ON public.\"LeadGenOpportunity\" USING btree (category, city)"
+        },
+        {
+          "indexname": "LeadGenOpportunity_pkey",
+          "tablename": "LeadGenOpportunity",
+          "indexdef": "CREATE UNIQUE INDEX \"LeadGenOpportunity_pkey\" ON public.\"LeadGenOpportunity\" USING btree (id)"
+        },
+        {
+          "indexname": "MarketTrend_pkey",
+          "tablename": "MarketTrend",
+          "indexdef": "CREATE UNIQUE INDEX \"MarketTrend_pkey\" ON public.\"MarketTrend\" USING btree (id)"
+        },
+        {
+          "indexname": "NewBusiness_pkey",
+          "tablename": "NewBusiness",
+          "indexdef": "CREATE UNIQUE INDEX \"NewBusiness_pkey\" ON public.\"NewBusiness\" USING btree (id)"
+        },
+        {
+          "indexname": "NewBusiness_placeId_key",
+          "tablename": "NewBusiness",
+          "indexdef": "CREATE UNIQUE INDEX \"NewBusiness_placeId_key\" ON public.\"NewBusiness\" USING btree (\"placeId\")"
+        },
+        {
+          "indexname": "Prospect_pkey",
+          "tablename": "Prospect",
+          "indexdef": "CREATE UNIQUE INDEX \"Prospect_pkey\" ON public.\"Prospect\" USING btree (id)"
+        },
+        {
+          "indexname": "Prospect_placeId_key",
+          "tablename": "Prospect",
+          "indexdef": "CREATE UNIQUE INDEX \"Prospect_placeId_key\" ON public.\"Prospect\" USING btree (\"placeId\")"
+        },
+        {
+          "indexname": "ProspectActivity_pkey",
+          "tablename": "ProspectActivity",
+          "indexdef": "CREATE UNIQUE INDEX \"ProspectActivity_pkey\" ON public.\"ProspectActivity\" USING btree (id)"
+        },
+        {
+          "indexname": "ProspectHistorical_pkey",
+          "tablename": "ProspectHistorical",
+          "indexdef": "CREATE UNIQUE INDEX \"ProspectHistorical_pkey\" ON public.\"ProspectHistorical\" USING btree (id)"
+        },
+        {
+          "indexname": "ProspectReview_pkey",
+          "tablename": "ProspectReview",
+          "indexdef": "CREATE UNIQUE INDEX \"ProspectReview_pkey\" ON public.\"ProspectReview\" USING btree (id)"
+        },
+        {
+          "indexname": "ProspectReview_reviewId_key",
+          "tablename": "ProspectReview",
+          "indexdef": "CREATE UNIQUE INDEX \"ProspectReview_reviewId_key\" ON public.\"ProspectReview\" USING btree (\"reviewId\")"
+        },
+        {
+          "indexname": "SentEmail_pkey",
+          "tablename": "SentEmail",
+          "indexdef": "CREATE UNIQUE INDEX \"SentEmail_pkey\" ON public.\"SentEmail\" USING btree (id)"
+        },
+        {
+          "indexname": "Session_pkey",
+          "tablename": "Session",
+          "indexdef": "CREATE UNIQUE INDEX \"Session_pkey\" ON public.\"Session\" USING btree (id)"
+        },
+        {
+          "indexname": "Session_sessionToken_key",
+          "tablename": "Session",
+          "indexdef": "CREATE UNIQUE INDEX \"Session_sessionToken_key\" ON public.\"Session\" USING btree (\"sessionToken\")"
+        },
+        {
+          "indexname": "SystemJob_pkey",
+          "tablename": "SystemJob",
+          "indexdef": "CREATE UNIQUE INDEX \"SystemJob_pkey\" ON public.\"SystemJob\" USING btree (id)"
+        },
+        {
+          "indexname": "User_email_key",
+          "tablename": "User",
+          "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+        },
+        {
+          "indexname": "User_pkey",
+          "tablename": "User",
+          "indexdef": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)"
+        },
+        {
+          "indexname": "VerificationToken_identifier_token_key",
+          "tablename": "VerificationToken",
+          "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_identifier_token_key\" ON public.\"VerificationToken\" USING btree (identifier, token)"
+        },
+        {
+          "indexname": "VerificationToken_token_key",
+          "tablename": "VerificationToken",
+          "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_token_key\" ON public.\"VerificationToken\" USING btree (token)"
+        },
+        {
+          "indexname": "_prisma_migrations_pkey",
+          "tablename": "_prisma_migrations",
+          "indexdef": "CREATE UNIQUE INDEX _prisma_migrations_pkey ON public._prisma_migrations USING btree (id)"
+        }
+      ],
+      "criticalIndexes": [
+        {
+          "name": "Prospect_placeId_key",
+          "table": "Prospect",
+          "found": true
+        },
+        {
+          "name": "User_email_key",
+          "table": "User",
+          "found": true
+        },
+        {
+          "name": "Session_sessionToken_key",
+          "table": "Session",
+          "found": true
+        },
+        {
+          "name": "GoogleToken_userId_key",
+          "table": "GoogleToken",
+          "found": true
+        },
+        {
+          "name": "NewBusiness_placeId_key",
+          "table": "NewBusiness",
+          "found": true
+        },
+        {
+          "name": "ProspectReview_reviewId_key",
+          "table": "ProspectReview",
+          "found": true
+        }
+      ]
+    },
+    "basicQuery": {
+      "status": "PASS",
+      "sampleData": [
+        {
+          "id": "cmk5xnjr40003ri2x6ki8uu0e",
+          "companyName": "CertaPro Painters of Minnetonka, MN",
+          "leadScore": null,
+          "city": "Plymouth",
+          "googleRating": 4.9,
+          "reviewCount": 156
+        },
+        {
+          "id": "cmk5xnju90004ri2xz7qyvkl6",
+          "companyName": "Decorator's Service Co",
+          "leadScore": null,
+          "city": "Plymouth",
+          "googleRating": 5,
+          "reviewCount": 4
+        },
+        {
+          "id": "cmk5xnjxb0005ri2xb3p4lu4i",
+          "companyName": "Prime Painting Concepts",
+          "leadScore": null,
+          "city": "Plymouth",
+          "googleRating": 5,
+          "reviewCount": 28
+        },
+        {
+          "id": "cmk5xnjzh0006ri2xqb002e3f",
+          "companyName": "CertaPro Painters of Minnetonka, MN",
+          "leadScore": null,
+          "city": "Plymouth",
+          "googleRating": 4.9,
+          "reviewCount": 156
+        },
+        {
+          "id": "cmk5xnk2j0007ri2xnvdk7adn",
+          "companyName": "Cesar's Painting",
+          "leadScore": null,
+          "city": "Plymouth",
+          "googleRating": 4.9,
+          "reviewCount": 82
+        }
+      ]
+    }
+  },
+  "databaseHealth": "GOOD",
+  "issues": [],
+  "recommendations": []
+}

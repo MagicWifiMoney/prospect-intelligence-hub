@@ -1,12 +1,11 @@
-
 generator client {
-    provider      = "prisma-client-js"
-    binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -15,137 +14,60 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
-model Session {
+model EmailTemplate {
+  id         String      @id @default(cuid())
+  name       String
+  subject    String
+  body       String
+  category   String
+  isActive   Boolean     @default(true)
+  usageCount Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt DateTime @updatedAt
+  SentEmail  SentEmail[]
+}
+
+model GoogleToken {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String   @unique
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime
+  scope        String?
+  createdAt    DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String       @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          String       @default("user")
-  firstName     String?
-  lastName      String?
-  accounts      Account[]
-  sessions      Session[]
-  googleToken   GoogleToken?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-}
+model LeadGenOpportunity {
+  id               String   @id @default(cuid())
+  category         String
+  city             String
+  state            String   @default("MN")
+  searchVolume     Int
+  competitionLevel String
+  topCompetitors   Json?
+  estimatedValue   Int
+  prospectCount    Int      @default(0)
+  avgRating        Float?
+  score            Int
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model Prospect {
-  id                     String                 @id @default(cuid())
-  companyName           String
-  businessType          String?
-  address               String?
-  city                  String?
-  phone                 String?
-  email                 String?
-  website               String?
-  gbpUrl                String?
-  googleRating          Float?
-  reviewCount           Int?
-  yearsInBusiness       Int?
-  employeeCount         Int?
-  categories            String?
-  facebook              String?
-  instagram             String?
-  linkedin              String?
-  twitter               String?
-  recentReviews         String?
-  growthSignals         String?
-  techStack             String?
-  placeId               String?               @unique
-  icpScore              Float?
-  dateCollected         DateTime?
-  qualificationSignals  String?
-  dataSource            String?
-  searchLocation        String?
-  leadScore             Float?
-  sentimentScore        Float?
-  isHotLead             Boolean               @default(false)
-  lastAnalyzed          DateTime?
-  aiRecommendations     String?
-  anomaliesDetected     String?
-  contactedAt           DateTime?
-  isConverted           Boolean               @default(false)
-  notes                 String?
-  tags                  String?
-  outreachStrategy      String?
-  painPoints            String?
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
-  historicalData        ProspectHistorical[]
-  reviews               ProspectReview[]
-  activities            ProspectActivity[]
-
-  // Enhanced scoring fields
-  highTicketScore       Int?                  // 0-100: Commercial/B2B potential
-  opportunityScore      Int?                  // 0-100: Marketing gap opportunity
-  leadGenScore          Int?                  // 0-100: SEO lead gen site potential
-  scoringFactors        Json?                 // Breakdown of scoring components
-  opportunityTags       String[]              // ["high_ticket", "boring_goldmine", "leadgen_opp"]
-
-  // Email tracking fields
-  emailThreadId         String?               // Gmail thread ID
-  lastEmailSentAt       DateTime?
-  emailCount            Int                   @default(0)
-  sentEmails            SentEmail[]
-}
-
-model ProspectHistorical {
-  id            String    @id @default(cuid())
-  prospectId    String
-  prospect      Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  googleRating  Float?
-  reviewCount   Int?
-  phone         String?
-  website       String?
-  businessHours String?
-  photos        String?
-  posts         String?
-  recordedAt    DateTime  @default(now())
-}
-
-model ProspectReview {
-  id            String    @id @default(cuid())
-  prospectId    String
-  prospect      Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  reviewId      String?   @unique
-  author        String?
-  rating        Int?
-  text          String?
-  publishedAt   DateTime?
-  sentiment     String?
-  sentimentScore Float?
-  extractedAt   DateTime  @default(now())
+  @@unique([category, city])
 }
 
 model MarketTrend {
@@ -161,29 +83,163 @@ model MarketTrend {
 }
 
 model NewBusiness {
-  id               String    @id @default(cuid())
-  companyName      String
-  businessType     String?
-  address          String?
-  city             String?
-  placeId          String?   @unique
-  googleRating     Float?
-  reviewCount      Int?
-  firstSeenAt      DateTime
-  isNewListing     Boolean   @default(true)
-  isNewReviews     Boolean   @default(false)
-  detectedAt       DateTime  @default(now())
+  id           String   @id @default(cuid())
+  companyName  String
+  businessType String?
+  address      String?
+  city         String?
+  placeId      String?  @unique
+  googleRating Float?
+  reviewCount  Int?
+  firstSeenAt  DateTime
+  isNewListing Boolean  @default(true)
+  isNewReviews Boolean  @default(false)
+  detectedAt   DateTime @default(now())
+}
+
+model Prospect {
+  id                   String               @id @default(cuid())
+  companyName          String
+  businessType         String?
+  address              String?
+  city                 String?
+  phone                String?
+  email                String?
+  website              String?
+  gbpUrl               String?
+  googleRating         Float?
+  reviewCount          Int?
+  yearsInBusiness      Int?
+  employeeCount        Int?
+  categories           String?
+  facebook             String?
+  instagram            String?
+  linkedin             String?
+  twitter              String?
+  recentReviews        String?
+  growthSignals        String?
+  techStack            String?
+  placeId              String?              @unique
+  icpScore             Float?
+  dateCollected        DateTime?
+  qualificationSignals String?
+  dataSource           String?
+  searchLocation       String?
+  leadScore            Float?
+  sentimentScore       Float?
+  isHotLead            Boolean              @default(false)
+  lastAnalyzed         DateTime?
+  aiRecommendations    String?
+  anomaliesDetected    String?
+  contactedAt          DateTime?
+  isConverted          Boolean              @default(false)
+  notes                String?
+  tags                 String?
+  outreachStrategy     String?
+  painPoints           String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime @updatedAt
+  emailCount           Int                  @default(0)
+  emailThreadId        String?
+  highTicketScore      Int?
+  lastEmailSentAt      DateTime?
+  leadGenScore         Int?
+  opportunityScore     Int?
+  opportunityTags      String[]
+  scoringFactors       Json?
+  
+  // Contact enrichment (owner/decision maker info)
+  ownerName            String?
+  ownerEmail           String?
+  ownerPhone           String?
+  ownerLinkedIn        String?
+
+  // Company social profiles
+  companyLinkedIn      String?
+  companyFacebook      String?
+  companyInstagram     String?
+  companyTwitter       String?
+
+  // Tech stack detection (from BuiltWith)
+  techStackRaw         Json?
+  hasCMS               Boolean?
+  cmsType              String?
+  hasAnalytics         Boolean?
+  hasLiveChat          Boolean?
+  needsWebsite         Boolean?
+
+  // Enrichment tracking
+  enrichedAt           DateTime?
+  enrichmentSources    String[]
+  
+  ProspectActivity     ProspectActivity[]
+  ProspectHistorical   ProspectHistorical[]
+  ProspectReview       ProspectReview[]
+  SentEmail            SentEmail[]
 }
 
 model ProspectActivity {
-  id          String    @id @default(cuid())
-  prospectId  String
-  prospect    Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  activityType String  // 'note', 'status_change', 'ai_analysis', 'contact_attempt', 'tag_added'
-  content     String?
-  metadata    String?  // JSON string for additional data
-  createdBy   String?
-  createdAt   DateTime  @default(now())
+  id           String   @id @default(cuid())
+  prospectId   String
+  activityType String
+  content      String?
+  metadata     String?
+  createdBy    String?
+  createdAt    DateTime @default(now())
+  Prospect     Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
+
+model ProspectHistorical {
+  id            String   @id @default(cuid())
+  prospectId    String
+  googleRating  Float?
+  reviewCount   Int?
+  phone         String?
+  website       String?
+  businessHours String?
+  photos        String?
+  posts         String?
+  recordedAt    DateTime @default(now())
+  Prospect      Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
+
+model ProspectReview {
+  id             String    @id @default(cuid())
+  prospectId     String
+  reviewId       String?   @unique
+  author         String?
+  rating         Int?
+  text           String?
+  publishedAt    DateTime?
+  sentiment      String?
+  sentimentScore Float?
+  extractedAt    DateTime  @default(now())
+  Prospect       Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+}
+
+model SentEmail {
+  id            String         @id @default(cuid())
+  prospectId    String
+  templateId    String?
+  subject       String
+  body          String
+  gmailMsgId    String?
+  threadId      String?
+  sentAt        DateTime       @default(now())
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  repliedAt     DateTime?
+  status        String         @default("sent")
+  Prospect      Prospect       @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  EmailTemplate EmailTemplate? @relation(fields: [templateId], references: [id])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SystemJob {
@@ -199,68 +255,27 @@ model SystemJob {
   createdAt   DateTime  @default(now())
 }
 
-// ============================================
-// Email & Outreach Models
-// ============================================
-
-model EmailTemplate {
-  id          String      @id @default(cuid())
-  name        String
-  subject     String
-  body        String      @db.Text    // With {{variables}} for mail merge
-  category    String      // "initial_outreach", "follow_up", "value_offer"
-  isActive    Boolean     @default(true)
-  usageCount  Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  sentEmails  SentEmail[]
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String       @default("user")
+  firstName     String?
+  lastName      String?
+  createdAt     DateTime     @default(now())
+  updatedAt DateTime @updatedAt
+  Account       Account[]
+  GoogleToken   GoogleToken?
+  Session       Session[]
 }
 
-model SentEmail {
-  id          String         @id @default(cuid())
-  prospectId  String
-  prospect    Prospect       @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  templateId  String?
-  template    EmailTemplate? @relation(fields: [templateId], references: [id])
-  subject     String
-  body        String         @db.Text
-  gmailMsgId  String?        // Gmail message ID for tracking
-  threadId    String?        // Gmail thread ID
-  sentAt      DateTime       @default(now())
-  openedAt    DateTime?
-  clickedAt   DateTime?
-  repliedAt   DateTime?
-  status      String         @default("sent") // "sent", "opened", "clicked", "replied", "bounced"
-}
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-model LeadGenOpportunity {
-  id               String   @id @default(cuid())
-  category         String   // "plumber", "roofer", "hvac", etc.
-  city             String
-  state            String   @default("MN")
-  searchVolume     Int      // Monthly search volume estimate
-  competitionLevel String   // "low", "medium", "high"
-  topCompetitors   Json?    // Top ranking sites info
-  estimatedValue   Int      // $ per lead estimate
-  prospectCount    Int      @default(0) // How many prospects in this niche
-  avgRating        Float?   // Average rating in this niche
-  score            Int      // Overall opportunity score 0-100
-  notes            String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([category, city])
-}
-
-// Store Gmail OAuth tokens per user
-model GoogleToken {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken  String   @db.Text
-  refreshToken String?  @db.Text
-  expiresAt    DateTime
-  scope        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  @@unique([identifier, token])
 }

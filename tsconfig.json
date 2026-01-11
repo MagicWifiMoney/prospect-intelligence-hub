@@ -37,6 +37,10 @@
     ".build/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "test-*.ts",
+    "test-*.js",
+    "**/*.test.ts",
+    "**/*.test.js"
   ]
 }

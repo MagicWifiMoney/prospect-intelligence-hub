@@ -5,8 +5,19 @@ const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN
 
 // Popular Apify actors for lead generation
 export const APIFY_ACTORS = {
-  GOOGLE_MAPS: 'compass/crawler-google-places',
+  // Core - Enhanced Google Maps with contact extraction
+  GOOGLE_MAPS: 'lukaskrivka/google-maps-with-contact-details',
+  GOOGLE_MAPS_PLUS: 'lukaskrivka/google-maps-with-contact-details', // Alias for clarity
   GOOGLE_SEARCH: 'apify/google-search-scraper',
+  
+  // Contact enrichment
+  CONTACT_SCRAPER: 'vdrmota/contact-info-scraper',
+  LEADS_FINDER: 'code_crafter/leads-finder',
+  
+  // Tech detection
+  BUILTWITH: 'canadesk/builtwith',
+  
+  // Directories
   YELP: 'maxcopell/yelp-scraper',
   YELLOW_PAGES: 'tugkan/yellow-pages-scraper',
 }
@@ -71,6 +82,24 @@ interface GoogleMapsResult {
   url?: string
   placeId?: string
   categories?: string[]
+  // Enhanced fields from lukaskrivka/google-maps-with-contact-details
+  emails?: string[]
+  email?: string
+  socialProfiles?: {
+    facebook?: string
+    instagram?: string
+    twitter?: string
+    linkedin?: string
+    youtube?: string
+  }
+  facebook?: string
+  instagram?: string
+  twitter?: string
+  linkedin?: string
+  contactInfo?: {
+    emails?: string[]
+    phones?: string[]
+  }
 }
 
 interface ApifyRunResult {
@@ -145,6 +174,7 @@ export async function getApifyDataset(datasetId: string): Promise<any[]> {
 
 /**
  * Start a Google Maps scrape for a specific search
+ * Uses lukaskrivka/google-maps-with-contact-details for auto email/social extraction
  */
 export async function scrapeGoogleMaps(
   searchQuery: string,
@@ -154,14 +184,12 @@ export async function scrapeGoogleMaps(
     searchStringsArray: [searchQuery],
     maxCrawledPlacesPerSearch: maxResults,
     language: 'en',
-    exportPlaceUrls: false,
-    includeWebResults: false,
+    // Enhanced contact extraction options
+    scrapeContactDetails: true,
+    scrapeEmails: true,
+    scrapeSocialProfiles: true,
     maxImages: 0,
     maxReviews: 5,
-    scrapeReviewerName: false,
-    scrapeReviewId: false,
-    scrapeReviewUrl: false,
-    scrapeResponseFromOwnerText: false,
   }
 
   return startApifyRun(APIFY_ACTORS.GOOGLE_MAPS, input)
@@ -169,6 +197,7 @@ export async function scrapeGoogleMaps(
 
 /**
  * Scrape multiple categories across multiple cities
+ * Uses lukaskrivka/google-maps-with-contact-details for auto email/social extraction
  */
 export async function scrapeMultipleSearches(
   categories: string[],
@@ -187,8 +216,10 @@ export async function scrapeMultipleSearches(
     searchStringsArray: searchStrings,
     maxCrawledPlacesPerSearch: maxResultsPerSearch,
     language: 'en',
-    exportPlaceUrls: false,
-    includeWebResults: false,
+    // Enhanced contact extraction options
+    scrapeContactDetails: true,
+    scrapeEmails: true,
+    scrapeSocialProfiles: true,
     maxImages: 0,
     maxReviews: 3,
   }
@@ -198,6 +229,7 @@ export async function scrapeMultipleSearches(
 
 /**
  * Import Google Maps results into the database
+ * Enhanced to handle contact details from lukaskrivka/google-maps-with-contact-details
  */
 export async function importGoogleMapsResults(
   results: GoogleMapsResult[]
@@ -208,6 +240,19 @@ export async function importGoogleMapsResults(
 
   for (const result of results) {
     try {
+      // Extract email from various possible fields
+      const extractedEmail = result.email || 
+        result.emails?.[0] || 
+        result.contactInfo?.emails?.[0] || 
+        null
+
+      // Extract social profiles (handle various response formats)
+      const socials = result.socialProfiles || {}
+      const facebook = socials.facebook || result.facebook || null
+      const instagram = socials.instagram || result.instagram || null
+      const twitter = socials.twitter || result.twitter || null
+      const linkedin = socials.linkedin || result.linkedin || null
+
       // Check for duplicate by placeId or company name + city
       const existingByPlaceId = result.placeId
         ? await prisma.prospect.findUnique({ where: { placeId: result.placeId } })
@@ -223,8 +268,10 @@ export async function importGoogleMapsResults(
         : null
 
       if (existingByPlaceId || existingByName) {
-        // Update existing prospect with fresh data
+        // Update existing prospect with fresh data including new enrichment fields
         const existingId = (existingByPlaceId || existingByName)!.id
+        const existing = existingByPlaceId || existingByName
+        
         await prisma.prospect.update({
           where: { id: existingId },
           data: {
@@ -232,6 +279,16 @@ export async function importGoogleMapsResults(
             reviewCount: result.reviewsCount || undefined,
             website: result.website || undefined,
             phone: result.phone || undefined,
+            // Only update email if we have one and they don't
+            email: extractedEmail && !existing!.email ? extractedEmail : undefined,
+            // Update social profiles if we have new data
+            companyFacebook: facebook && !existing!.companyFacebook ? facebook : undefined,
+            companyInstagram: instagram && !existing!.companyInstagram ? instagram : undefined,
+            companyTwitter: twitter && !existing!.companyTwitter ? twitter : undefined,
+            companyLinkedIn: linkedin && !existing!.companyLinkedIn ? linkedin : undefined,
+            // Track enrichment
+            enrichedAt: extractedEmail || facebook || instagram || twitter || linkedin 
+              ? new Date() : undefined,
             updatedAt: new Date(),
           },
         })
@@ -239,7 +296,7 @@ export async function importGoogleMapsResults(
         continue
       }
 
-      // Create new prospect
+      // Create new prospect with all available data
       const newProspect = await prisma.prospect.create({
         data: {
           companyName: result.title,
@@ -247,13 +304,23 @@ export async function importGoogleMapsResults(
           categories: result.categories?.join(', ') || null,
           address: result.address || null,
           city: result.city || extractCity(result.address),
-          phone: result.phone || null,
+          phone: result.phone || result.contactInfo?.phones?.[0] || null,
+          email: extractedEmail,
           website: result.website || null,
           gbpUrl: result.url || null,
           placeId: result.placeId || null,
           googleRating: result.totalScore || null,
           reviewCount: result.reviewsCount || null,
-          dataSource: 'apify_google_maps',
+          // Social profiles from enhanced scraper
+          companyFacebook: facebook,
+          companyInstagram: instagram,
+          companyTwitter: twitter,
+          companyLinkedIn: linkedin,
+          // Enrichment tracking
+          enrichedAt: extractedEmail || facebook || instagram || twitter || linkedin 
+            ? new Date() : null,
+          enrichmentSources: ['google_maps_plus'],
+          dataSource: 'apify_google_maps_plus',
           dateCollected: new Date(),
         },
       })

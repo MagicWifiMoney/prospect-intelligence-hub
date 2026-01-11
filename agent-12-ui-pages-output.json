@@ -1,0 +1,89 @@
+{
+  "agent": "Agent-12-UIPages",
+  "timestamp": "2026-01-10T22:33:00.714Z",
+  "pagesRendered": "15/15",
+  "results": {
+    "dashboard": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "44ms"
+    },
+    "prospects": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "97ms"
+    },
+    "prospectDetail": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "29ms"
+    },
+    "hotLeads": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "92ms"
+    },
+    "goldmines": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "32ms"
+    },
+    "leadGen": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "20ms"
+    },
+    "scrape": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "25ms"
+    },
+    "analytics": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "35ms"
+    },
+    "trends": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "25ms"
+    },
+    "anomalies": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "43ms"
+    },
+    "newBusinesses": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "68ms"
+    },
+    "email": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "46ms"
+    },
+    "addProspects": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "42ms"
+    },
+    "reports": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "13ms"
+    },
+    "settings": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "loadTime": "14ms"
+    }
+  },
+  "performance": {
+    "fastestPage": "reports (13ms)",
+    "slowestPage": "prospects (97ms)",
+    "averageLoadTime": "42ms"
+  },
+  "failedPages": [],
+  "criticalIssues": []
+}

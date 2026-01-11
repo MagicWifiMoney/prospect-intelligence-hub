@@ -16,15 +16,15 @@ export async function GET(
     const prospect = await prisma.prospect.findUnique({
       where: { id: params.id },
       include: {
-        reviews: {
+        ProspectReview: {
           orderBy: { publishedAt: 'desc' },
           take: 20
         },
-        historicalData: {
+        ProspectHistorical: {
           orderBy: { recordedAt: 'desc' },
           take: 10
         },
-        activities: {
+        ProspectActivity: {
           orderBy: { createdAt: 'desc' },
           take: 50
         }
