@@ -2,27 +2,26 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { startApifyRun, getApifyRunStatus, getApifyDataset, APIFY_ACTORS } from '@/lib/apify'
+import {
+  scrapeWebsiteContacts,
+  getApifyRunStatus,
+  getApifyDataset,
+  enrichProspectWithContacts,
+  getProspectsNeedingEnrichment,
+  ContactScraperResult,
+} from '@/lib/apify'
 
 export const dynamic = 'force-dynamic'
 
-interface ContactScraperResult {
-  url: string
-  emails?: string[]
-  phones?: string[]
-  socialLinks?: {
-    facebook?: string
-    twitter?: string
-    instagram?: string
-    linkedin?: string
-    youtube?: string
-  }
-  contactPageUrl?: string
-}
-
 /**
- * POST - Enrich prospect contact details by scraping their website
- * Uses vdrmota/contact-info-scraper
+ * POST /api/scrape/enrich-contacts
+ * 
+ * Enrich prospect(s) with contact info from their websites
+ * 
+ * Body options:
+ * - { prospectId: string } - Enrich single prospect
+ * - { prospectIds: string[] } - Enrich multiple prospects
+ * - { bulk: true, limit?: number } - Auto-find prospects needing enrichment
  */
 export async function POST(request: Request) {
   try {
@@ -32,81 +31,51 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { prospectId, prospectIds, websites } = body
+    const { prospectId, prospectIds, bulk, limit = 20 } = body
 
-    // Get prospects to enrich
-    let prospectsToEnrich: { id: string; website: string }[] = []
+    let prospectsToEnrich: Array<{ id: string; companyName: string; website: string }> = []
 
-    if (prospectId) {
-      // Single prospect
+    if (bulk) {
+      // Find prospects automatically
+      prospectsToEnrich = await getProspectsNeedingEnrichment(limit)
+    } else if (prospectId) {
       const prospect = await prisma.prospect.findUnique({
         where: { id: prospectId },
-        select: { id: true, website: true },
+        select: { id: true, companyName: true, website: true },
       })
       if (prospect?.website) {
-        prospectsToEnrich.push({ id: prospect.id, website: prospect.website })
+        prospectsToEnrich = [prospect as { id: string; companyName: string; website: string }]
       }
-    } else if (prospectIds?.length > 0) {
-      // Multiple prospects by ID
+    } else if (prospectIds?.length) {
       const prospects = await prisma.prospect.findMany({
-        where: { id: { in: prospectIds }, website: { not: null } },
-        select: { id: true, website: true },
+        where: { id: { in: prospectIds } },
+        select: { id: true, companyName: true, website: true },
       })
-      prospectsToEnrich = prospects
-        .filter((p) => p.website)
-        .map((p) => ({ id: p.id, website: p.website! }))
-    } else if (websites?.length > 0) {
-      // Direct website URLs (for bulk enrichment)
-      prospectsToEnrich = websites.map((url: string, i: number) => ({
-        id: `temp_${i}`,
-        website: url,
-      }))
-    } else {
-      // Enrich all prospects missing email
-      const prospects = await prisma.prospect.findMany({
-        where: {
-          website: { not: null },
-          email: null,
-        },
-        select: { id: true, website: true },
-        take: 50, // Limit batch size
-      })
-      prospectsToEnrich = prospects
-        .filter((p) => p.website)
-        .map((p) => ({ id: p.id, website: p.website! }))
+      prospectsToEnrich = prospects.filter(p => p.website) as Array<{ id: string; companyName: string; website: string }>
     }
 
     if (prospectsToEnrich.length === 0) {
       return NextResponse.json({
         success: false,
-        message: 'No prospects with websites found to enrich',
-      })
+        error: 'No prospects with websites found to enrich',
+      }, { status: 400 })
     }
 
-    // Prepare URLs for the scraper
-    const urls = prospectsToEnrich.map((p) => p.website)
+    // Extract URLs
+    const urls = prospectsToEnrich.map(p => p.website)
 
-    // Start Apify run with contact-info-scraper
-    const input = {
-      startUrls: urls.map((url) => ({ url })),
-      maxDepth: 2,
-      maxPagesPerDomain: 10,
-      scrapeEmails: true,
-      scrapePhones: true,
-      scrapeSocial: true,
-    }
+    // Start Apify run
+    const run = await scrapeWebsiteContacts(urls)
 
-    const apifyRun = await startApifyRun(APIFY_ACTORS.CONTACT_SCRAPER, input)
-
-    // Create a system job to track this
-    await prisma.systemJob.create({
+    // Create job record
+    const job = await prisma.systemJob.create({
       data: {
         jobType: 'contact_enrichment',
         status: 'running',
         payload: JSON.stringify({
-          apifyRunId: apifyRun.id,
-          prospectMapping: prospectsToEnrich,
-          websiteCount: urls.length,
+          apifyRunId: run.id,
+          prospectIds: prospectsToEnrich.map(p => p.id),
+          urls,
         }),
         scheduledAt: new Date(),
         startedAt: new Date(),
@@ -115,136 +84,115 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      apifyRunId: apifyRun.id,
-      datasetId: apifyRun.datasetId,
-      status: apifyRun.status,
-      websitesQueued: urls.length,
-      message: `Started contact enrichment for ${urls.length} websites`,
+      jobId: job.id,
+      apifyRunId: run.id,
+      prospectsQueued: prospectsToEnrich.length,
+      message: `Contact enrichment started for ${prospectsToEnrich.length} prospects`,
     })
   } catch (error) {
     console.error('Error starting contact enrichment:', error)
     return NextResponse.json(
-      { error: 'Failed to start contact enrichment', details: String(error) },
+      { error: 'Failed to start enrichment', details: String(error) },
       { status: 500 }
     )
   }
 }
 
 /**
- * PUT - Import contact enrichment results and update prospects
+ * GET /api/scrape/enrich-contacts?jobId=xxx
+ * 
+ * Check status of enrichment job and process results if complete
  */
-export async function PUT(request: Request) {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { apifyRunId, datasetId } = body
+    const { searchParams } = new URL(request.url)
+    const jobId = searchParams.get('jobId')
 
-    if (!apifyRunId && !datasetId) {
-      return NextResponse.json(
-        { error: 'apifyRunId or datasetId required' },
-        { status: 400 }
-      )
+    if (!jobId) {
+      // Return prospects needing enrichment
+      const needsEnrichment = await getProspectsNeedingEnrichment(100)
+      return NextResponse.json({
+        prospectsNeedingEnrichment: needsEnrichment.length,
+        sample: needsEnrichment.slice(0, 10),
+      })
     }
 
-    // Get dataset ID from run if not provided
-    let finalDatasetId = datasetId
-    if (!finalDatasetId && apifyRunId) {
-      const runStatus = await getApifyRunStatus(apifyRunId)
-      if (runStatus.status !== 'SUCCEEDED') {
-        return NextResponse.json({
-          success: false,
-          status: runStatus.status,
-          message: 'Run not yet completed',
-        })
+    // Check job status
+    const job = await prisma.systemJob.findUnique({ where: { id: jobId } })
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+    }
+
+    const payload = JSON.parse(job.payload || '{}')
+    const runStatus = await getApifyRunStatus(payload.apifyRunId)
+
+    if (runStatus.status === 'SUCCEEDED' && job.status === 'running') {
+      // Process results
+      const results = await getApifyDataset(runStatus.datasetId!) as ContactScraperResult[]
+      
+      let enriched = 0
+      let errors = 0
+
+      // Map URLs to prospect IDs
+      const urlToProspect = new Map<string, string>()
+      const prospects = await prisma.prospect.findMany({
+        where: { id: { in: payload.prospectIds } },
+        select: { id: true, website: true },
+      })
+      prospects.forEach(p => {
+        if (p.website) {
+          // Normalize URL for matching
+          const normalized = p.website.replace(/^https?:\/\//, '').replace(/\/$/, '')
+          urlToProspect.set(normalized, p.id)
+        }
+      })
+
+      for (const result of results) {
+        try {
+          const normalizedUrl = result.url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+          const prospectId = urlToProspect.get(normalizedUrl)
+          
+          if (prospectId && (result.emails?.length || result.linkedin || result.facebook)) {
+            await enrichProspectWithContacts(prospectId, result)
+            enriched++
+          }
+        } catch (e) {
+          console.error('Error enriching prospect:', e)
+          errors++
+        }
       }
-      finalDatasetId = runStatus.datasetId
-    }
 
-    // Get results
-    const results: ContactScraperResult[] = await getApifyDataset(finalDatasetId)
-
-    // Update prospects with enriched data
-    let updated = 0
-    let notFound = 0
-
-    for (const result of results) {
-      if (!result.url) continue
-
-      // Find prospect by website URL
-      const prospect = await prisma.prospect.findFirst({
-        where: {
-          OR: [
-            { website: { contains: new URL(result.url).hostname } },
-            { website: result.url },
-          ],
+      // Update job
+      await prisma.systemJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'completed',
+          result: JSON.stringify({ enriched, errors, total: results.length }),
+          completedAt: new Date(),
         },
       })
 
-      if (!prospect) {
-        notFound++
-        continue
-      }
-
-      // Prepare update data
-      const updateData: Record<string, any> = {
-        enrichedAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      // Add email if found and not already set
-      if (result.emails?.length && !prospect.email) {
-        updateData.email = result.emails[0]
-      }
-
-      // Add phone if found and not already set
-      if (result.phones?.length && !prospect.phone) {
-        updateData.phone = result.phones[0]
-      }
-
-      // Add social profiles
-      if (result.socialLinks) {
-        if (result.socialLinks.facebook && !prospect.companyFacebook) {
-          updateData.companyFacebook = result.socialLinks.facebook
-        }
-        if (result.socialLinks.instagram && !prospect.companyInstagram) {
-          updateData.companyInstagram = result.socialLinks.instagram
-        }
-        if (result.socialLinks.twitter && !prospect.companyTwitter) {
-          updateData.companyTwitter = result.socialLinks.twitter
-        }
-        if (result.socialLinks.linkedin && !prospect.companyLinkedIn) {
-          updateData.companyLinkedIn = result.socialLinks.linkedin
-        }
-      }
-
-      // Track enrichment sources
-      const existingSources = prospect.enrichmentSources || []
-      if (!existingSources.includes('contact_scraper')) {
-        updateData.enrichmentSources = [...existingSources, 'contact_scraper']
-      }
-
-      await prisma.prospect.update({
-        where: { id: prospect.id },
-        data: updateData,
+      return NextResponse.json({
+        status: 'completed',
+        enriched,
+        errors,
+        total: results.length,
       })
-
-      updated++
     }
 
     return NextResponse.json({
-      success: true,
-      resultsProcessed: results.length,
-      prospectsUpdated: updated,
-      prospectsNotFound: notFound,
+      status: runStatus.status.toLowerCase(),
+      jobStatus: job.status,
     })
   } catch (error) {
-    console.error('Error importing contact enrichment:', error)
+    console.error('Error checking enrichment status:', error)
     return NextResponse.json(
-      { error: 'Failed to import results', details: String(error) },
+      { error: 'Failed to check status', details: String(error) },
       { status: 500 }
     )
   }

@@ -2,6 +2,8 @@
   "version": 2,
   "framework": "nextjs",
   "regions": ["iad1"],
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install",
   "build": {
     "env": {
       "SKIP_ENV_VALIDATION": "1"

@@ -5,21 +5,26 @@ const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN
 
 // Popular Apify actors for lead generation
 export const APIFY_ACTORS = {
-  // Core - Enhanced Google Maps with contact extraction
-  GOOGLE_MAPS: 'lukaskrivka/google-maps-with-contact-details',
-  GOOGLE_MAPS_PLUS: 'lukaskrivka/google-maps-with-contact-details', // Alias for clarity
+  // Core scrapers (Phase 1)
+  GOOGLE_MAPS: 'lukaskrivka/google-maps-with-contact-details',  // Enhanced: includes email/social extraction
+  CONTACT_SCRAPER: 'vdrmota/contact-info-scraper',              // Website contact extraction
+  LEADS_FINDER: 'code_crafter/leads-finder',                    // Apollo-style decision maker lookup
+  BUILTWITH: 'canadesk/builtwith',                              // Tech stack detection
+  
+  // Directory scrapers (Phase 2)
+  YELP_LISTINGS: 'jupri/yelp',
+  YELP_REVIEWS: 'delicious_zebu/yelp-reviews-scraper',
+  ANGI: 'igolaizola/angi-scraper',
+  YELLOW_PAGES: 'trudax/yellow-pages-us-scraper',
+  
+  // Social scrapers (Phase 3)
+  FACEBOOK_PAGES: 'apify/facebook-pages-scraper',
+  LINKEDIN_COMPANY: 'apimaestro/linkedin-company-detail',
+  
+  // Legacy/bonus
   GOOGLE_SEARCH: 'apify/google-search-scraper',
-  
-  // Contact enrichment
-  CONTACT_SCRAPER: 'vdrmota/contact-info-scraper',
-  LEADS_FINDER: 'code_crafter/leads-finder',
-  
-  // Tech detection
-  BUILTWITH: 'canadesk/builtwith',
-  
-  // Directories
-  YELP: 'maxcopell/yelp-scraper',
-  YELLOW_PAGES: 'tugkan/yellow-pages-scraper',
+  GOOGLE_REVIEWS_DEEP: 'compass/Google-Maps-Reviews-Scraper',
+  BBB: 'scraped/bbb',
 }
 
 // Minnesota cities to target
@@ -70,6 +75,7 @@ export const SERVICE_CATEGORIES = [
   'water damage restoration',
 ]
 
+// Enhanced Google Maps result (from lukaskrivka/google-maps-with-contact-details)
 interface GoogleMapsResult {
   title: string
   categoryName?: string
@@ -82,9 +88,9 @@ interface GoogleMapsResult {
   url?: string
   placeId?: string
   categories?: string[]
-  // Enhanced fields from lukaskrivka/google-maps-with-contact-details
-  emails?: string[]
+  // Enhanced fields from contact extraction
   email?: string
+  emails?: string[]
   socialProfiles?: {
     facebook?: string
     instagram?: string
@@ -92,14 +98,50 @@ interface GoogleMapsResult {
     linkedin?: string
     youtube?: string
   }
-  facebook?: string
-  instagram?: string
-  twitter?: string
-  linkedin?: string
   contactInfo?: {
     emails?: string[]
     phones?: string[]
   }
+}
+
+// Contact scraper result (from vdrmota/contact-info-scraper)
+export interface ContactScraperResult {
+  url: string
+  emails?: string[]
+  phones?: string[]
+  linkedin?: string
+  facebook?: string
+  instagram?: string
+  twitter?: string
+  youtube?: string
+}
+
+// Leads finder result (from code_crafter/leads-finder)
+export interface LeadsFinderResult {
+  company?: string
+  domain?: string
+  contacts?: Array<{
+    name?: string
+    title?: string
+    email?: string
+    phone?: string
+    linkedin?: string
+  }>
+}
+
+// BuiltWith result (from canadesk/builtwith)
+export interface BuiltWithResult {
+  domain: string
+  technologies?: Array<{
+    name: string
+    category: string
+    description?: string
+  }>
+  cms?: string
+  analytics?: string[]
+  widgets?: string[]
+  ecommerce?: string
+  hosting?: string
 }
 
 interface ApifyRunResult {
@@ -174,7 +216,6 @@ export async function getApifyDataset(datasetId: string): Promise<any[]> {
 
 /**
  * Start a Google Maps scrape for a specific search
- * Uses lukaskrivka/google-maps-with-contact-details for auto email/social extraction
  */
 export async function scrapeGoogleMaps(
   searchQuery: string,
@@ -184,12 +225,14 @@ export async function scrapeGoogleMaps(
     searchStringsArray: [searchQuery],
     maxCrawledPlacesPerSearch: maxResults,
     language: 'en',
-    // Enhanced contact extraction options
-    scrapeContactDetails: true,
-    scrapeEmails: true,
-    scrapeSocialProfiles: true,
+    exportPlaceUrls: false,
+    includeWebResults: false,
     maxImages: 0,
     maxReviews: 5,
+    scrapeReviewerName: false,
+    scrapeReviewId: false,
+    scrapeReviewUrl: false,
+    scrapeResponseFromOwnerText: false,
   }
 
   return startApifyRun(APIFY_ACTORS.GOOGLE_MAPS, input)
@@ -197,7 +240,6 @@ export async function scrapeGoogleMaps(
 
 /**
  * Scrape multiple categories across multiple cities
- * Uses lukaskrivka/google-maps-with-contact-details for auto email/social extraction
  */
 export async function scrapeMultipleSearches(
   categories: string[],
@@ -216,10 +258,8 @@ export async function scrapeMultipleSearches(
     searchStringsArray: searchStrings,
     maxCrawledPlacesPerSearch: maxResultsPerSearch,
     language: 'en',
-    // Enhanced contact extraction options
-    scrapeContactDetails: true,
-    scrapeEmails: true,
-    scrapeSocialProfiles: true,
+    exportPlaceUrls: false,
+    includeWebResults: false,
     maxImages: 0,
     maxReviews: 3,
   }
@@ -229,7 +269,6 @@ export async function scrapeMultipleSearches(
 
 /**
  * Import Google Maps results into the database
- * Enhanced to handle contact details from lukaskrivka/google-maps-with-contact-details
  */
 export async function importGoogleMapsResults(
   results: GoogleMapsResult[]
@@ -240,19 +279,6 @@ export async function importGoogleMapsResults(
 
   for (const result of results) {
     try {
-      // Extract email from various possible fields
-      const extractedEmail = result.email || 
-        result.emails?.[0] || 
-        result.contactInfo?.emails?.[0] || 
-        null
-
-      // Extract social profiles (handle various response formats)
-      const socials = result.socialProfiles || {}
-      const facebook = socials.facebook || result.facebook || null
-      const instagram = socials.instagram || result.instagram || null
-      const twitter = socials.twitter || result.twitter || null
-      const linkedin = socials.linkedin || result.linkedin || null
-
       // Check for duplicate by placeId or company name + city
       const existingByPlaceId = result.placeId
         ? await prisma.prospect.findUnique({ where: { placeId: result.placeId } })
@@ -268,10 +294,8 @@ export async function importGoogleMapsResults(
         : null
 
       if (existingByPlaceId || existingByName) {
-        // Update existing prospect with fresh data including new enrichment fields
+        // Update existing prospect with fresh data
         const existingId = (existingByPlaceId || existingByName)!.id
-        const existing = existingByPlaceId || existingByName
-        
         await prisma.prospect.update({
           where: { id: existingId },
           data: {
@@ -279,16 +303,6 @@ export async function importGoogleMapsResults(
             reviewCount: result.reviewsCount || undefined,
             website: result.website || undefined,
             phone: result.phone || undefined,
-            // Only update email if we have one and they don't
-            email: extractedEmail && !existing!.email ? extractedEmail : undefined,
-            // Update social profiles if we have new data
-            companyFacebook: facebook && !existing!.companyFacebook ? facebook : undefined,
-            companyInstagram: instagram && !existing!.companyInstagram ? instagram : undefined,
-            companyTwitter: twitter && !existing!.companyTwitter ? twitter : undefined,
-            companyLinkedIn: linkedin && !existing!.companyLinkedIn ? linkedin : undefined,
-            // Track enrichment
-            enrichedAt: extractedEmail || facebook || instagram || twitter || linkedin 
-              ? new Date() : undefined,
             updatedAt: new Date(),
           },
         })
@@ -296,7 +310,20 @@ export async function importGoogleMapsResults(
         continue
       }
 
-      // Create new prospect with all available data
+      // Extract emails from enhanced Google Maps result
+      const allEmails = [
+        result.email,
+        ...(result.emails || []),
+        ...(result.contactInfo?.emails || []),
+      ].filter(Boolean) as string[]
+      
+      const primaryEmail = allEmails[0] || null
+      const additionalEmails = allEmails.slice(1)
+
+      // Extract social profiles
+      const socials = result.socialProfiles || {}
+
+      // Create new prospect with enhanced fields
       const newProspect = await prisma.prospect.create({
         data: {
           companyName: result.title,
@@ -304,24 +331,24 @@ export async function importGoogleMapsResults(
           categories: result.categories?.join(', ') || null,
           address: result.address || null,
           city: result.city || extractCity(result.address),
-          phone: result.phone || result.contactInfo?.phones?.[0] || null,
-          email: extractedEmail,
+          phone: result.phone || null,
+          email: primaryEmail,
           website: result.website || null,
           gbpUrl: result.url || null,
           placeId: result.placeId || null,
           googleRating: result.totalScore || null,
           reviewCount: result.reviewsCount || null,
-          // Social profiles from enhanced scraper
-          companyFacebook: facebook,
-          companyInstagram: instagram,
-          companyTwitter: twitter,
-          companyLinkedIn: linkedin,
-          // Enrichment tracking
-          enrichedAt: extractedEmail || facebook || instagram || twitter || linkedin 
-            ? new Date() : null,
-          enrichmentSources: ['google_maps_plus'],
-          dataSource: 'apify_google_maps_plus',
+          dataSource: 'apify_google_maps',
           dateCollected: new Date(),
+          // Enhanced fields
+          additionalEmails: additionalEmails,
+          companyFacebook: socials.facebook || null,
+          companyInstagram: socials.instagram || null,
+          companyTwitter: socials.twitter || null,
+          companyLinkedIn: socials.linkedin || null,
+          companyYouTube: socials.youtube || null,
+          enrichmentSources: ['google_maps'],
+          enrichedAt: allEmails.length > 0 || Object.keys(socials).length > 0 ? new Date() : null,
         },
       })
 
@@ -415,4 +442,227 @@ export async function getRecentScrapeJobs(limit: number = 10) {
     orderBy: { createdAt: 'desc' },
     take: limit,
   })
+}
+
+// ============================================
+// PHASE 1: New Enrichment Functions
+// ============================================
+
+/**
+ * Scrape website for contact info (emails, phones, socials)
+ * Uses: vdrmota/contact-info-scraper
+ */
+export async function scrapeWebsiteContacts(
+  urls: string[]
+): Promise<ApifyRunResult> {
+  const input = {
+    startUrls: urls.map(url => ({ url })),
+    maxDepth: 2,
+    maxPagesPerDomain: 10,
+    sameDomainOnly: true,
+  }
+
+  return startApifyRun(APIFY_ACTORS.CONTACT_SCRAPER, input)
+}
+
+/**
+ * Find decision makers for a company (Apollo-style)
+ * Uses: code_crafter/leads-finder
+ */
+export async function findDecisionMakers(
+  companyName: string,
+  domain?: string
+): Promise<ApifyRunResult> {
+  const input = {
+    companies: [{
+      name: companyName,
+      domain: domain,
+    }],
+    roles: ['owner', 'ceo', 'president', 'founder', 'manager', 'director'],
+    limit: 5,
+  }
+
+  return startApifyRun(APIFY_ACTORS.LEADS_FINDER, input)
+}
+
+/**
+ * Detect tech stack for a website
+ * Uses: canadesk/builtwith
+ */
+export async function detectTechStack(
+  domain: string
+): Promise<ApifyRunResult> {
+  const input = {
+    urls: [domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')],
+  }
+
+  return startApifyRun(APIFY_ACTORS.BUILTWITH, input)
+}
+
+/**
+ * Enrich a prospect with contact scraper results
+ */
+export async function enrichProspectWithContacts(
+  prospectId: string,
+  contactData: ContactScraperResult
+): Promise<void> {
+  const prospect = await prisma.prospect.findUnique({ where: { id: prospectId } })
+  if (!prospect) throw new Error('Prospect not found')
+
+  // Merge emails (avoid duplicates)
+  const existingEmails = [prospect.email, ...(prospect.additionalEmails || [])].filter(Boolean) as string[]
+  const newEmails = contactData.emails || []
+  const allEmails = [...new Set([...existingEmails, ...newEmails])]
+  
+  const primaryEmail = allEmails[0] || null
+  const additionalEmails = allEmails.slice(1)
+
+  // Update enrichment sources
+  const sources = [...(prospect.enrichmentSources || []), 'contact_scraper']
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      email: primaryEmail,
+      additionalEmails,
+      companyLinkedIn: contactData.linkedin || prospect.companyLinkedIn,
+      companyFacebook: contactData.facebook || prospect.companyFacebook,
+      companyInstagram: contactData.instagram || prospect.companyInstagram,
+      companyTwitter: contactData.twitter || prospect.companyTwitter,
+      companyYouTube: contactData.youtube || prospect.companyYouTube,
+      enrichmentSources: [...new Set(sources)],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Enrich a prospect with decision maker info
+ */
+export async function enrichProspectWithDecisionMaker(
+  prospectId: string,
+  leadsData: LeadsFinderResult
+): Promise<void> {
+  const contact = leadsData.contacts?.[0]
+  if (!contact) return
+
+  const sources = await prisma.prospect.findUnique({ 
+    where: { id: prospectId },
+    select: { enrichmentSources: true }
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      ownerName: contact.name || undefined,
+      ownerTitle: contact.title || undefined,
+      ownerEmail: contact.email || undefined,
+      ownerPhone: contact.phone || undefined,
+      ownerLinkedIn: contact.linkedin || undefined,
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'leads_finder'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Enrich a prospect with tech stack info
+ */
+export async function enrichProspectWithTechStack(
+  prospectId: string,
+  techData: BuiltWithResult
+): Promise<void> {
+  const techs = techData.technologies || []
+  
+  // Categorize technologies
+  const cms = techs.find(t => 
+    t.category?.toLowerCase().includes('cms') || 
+    ['wordpress', 'wix', 'squarespace', 'shopify', 'webflow', 'drupal', 'joomla'].some(
+      c => t.name?.toLowerCase().includes(c)
+    )
+  )
+  
+  const analytics = techs.filter(t => 
+    t.category?.toLowerCase().includes('analytics') ||
+    t.name?.toLowerCase().includes('analytics') ||
+    t.name?.toLowerCase().includes('tag manager')
+  )
+  
+  const liveChat = techs.find(t =>
+    t.category?.toLowerCase().includes('chat') ||
+    ['intercom', 'drift', 'zendesk', 'freshchat', 'tawk', 'livechat'].some(
+      c => t.name?.toLowerCase().includes(c)
+    )
+  )
+  
+  const ecommerce = techs.find(t =>
+    t.category?.toLowerCase().includes('ecommerce') ||
+    ['shopify', 'woocommerce', 'bigcommerce', 'magento'].some(
+      c => t.name?.toLowerCase().includes(c)
+    )
+  )
+
+  const hasBooking = techs.some(t =>
+    ['calendly', 'acuity', 'booking', 'schedule'].some(
+      c => t.name?.toLowerCase().includes(c)
+    )
+  )
+
+  const hasForms = techs.some(t =>
+    ['typeform', 'jotform', 'gravity forms', 'wpforms', 'contact form'].some(
+      c => t.name?.toLowerCase().includes(c)
+    )
+  )
+
+  const sources = await prisma.prospect.findUnique({ 
+    where: { id: prospectId },
+    select: { enrichmentSources: true }
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      techStackRaw: techs as any,
+      hasCMS: !!cms,
+      cmsType: cms?.name || techData.cms || null,
+      hasAnalytics: analytics.length > 0,
+      analyticsType: analytics.map(a => a.name).join(', ') || null,
+      hasLiveChat: !!liveChat,
+      liveChatType: liveChat?.name || null,
+      hasBookingWidget: hasBooking,
+      hasForms: hasForms,
+      hasEcommerce: !!ecommerce,
+      needsWebsite: !cms && techs.length < 3, // Basic heuristic
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'builtwith'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Bulk enrich prospects missing email
+ * Returns prospects that need enrichment
+ */
+export async function getProspectsNeedingEnrichment(
+  limit: number = 50
+): Promise<Array<{ id: string; companyName: string; website: string }>> {
+  const prospects = await prisma.prospect.findMany({
+    where: {
+      email: null,
+      website: { not: null },
+      OR: [
+        { enrichedAt: null },
+        { enrichedAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }, // Re-enrich after 30 days
+      ],
+    },
+    select: {
+      id: true,
+      companyName: true,
+      website: true,
+    },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return prospects.filter(p => p.website) as Array<{ id: string; companyName: string; website: string }>
 }
