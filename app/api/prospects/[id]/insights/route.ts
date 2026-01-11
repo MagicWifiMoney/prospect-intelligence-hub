@@ -19,7 +19,7 @@ export async function POST(
     const prospect = await prisma.prospect.findUnique({
       where: { id: prospectId },
       include: {
-        ProspectReview: {
+        reviews: {
           take: 10,
           orderBy: { publishedAt: 'desc' }
         }
@@ -40,7 +40,7 @@ export async function POST(
     }
 
     // Prepare review text
-    const reviewTexts = prospect.ProspectReview
+    const reviewTexts = prospect.reviews
       .filter(r => r.text)
       .map(r => `Rating: ${r.rating}/5 - "${r.text}"`)
       .join('\n')
