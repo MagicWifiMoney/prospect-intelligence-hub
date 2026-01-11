@@ -202,6 +202,45 @@ export interface YellowPagesResult {
   description?: string
 }
 
+// Facebook Pages result (from apify/facebook-pages-scraper)
+export interface FacebookPagesResult {
+  name: string
+  url: string
+  pageId?: string
+  about?: string
+  category?: string
+  website?: string
+  phone?: string
+  email?: string
+  address?: string
+  city?: string
+  likes?: number
+  followers?: number
+  rating?: number
+  reviewCount?: number
+  lastPostDate?: string
+  isVerified?: boolean
+  coverPhoto?: string
+  profilePhoto?: string
+}
+
+// LinkedIn Company result (from apimaestro/linkedin-company-detail)
+export interface LinkedInCompanyResult {
+  name: string
+  url: string
+  linkedInId?: string
+  description?: string
+  website?: string
+  industry?: string
+  employeeCount?: number
+  employeeRange?: string    // e.g., "11-50 employees"
+  headquarters?: string
+  foundedYear?: number
+  specialties?: string[]
+  type?: string             // e.g., "Privately Held"
+  logo?: string
+}
+
 interface ApifyRunResult {
   id: string
   status: string
@@ -1109,5 +1148,271 @@ export async function importYellowPagesResults(
 
   return { matched, created, errors }
 }
+
+// ============================================
+// PHASE 3: Facebook Pages Integration
+// ============================================
+
+/**
+ * Scrape Facebook for business pages
+ * Uses: apify/facebook-pages-scraper
+ */
+export async function scrapeFacebookPages(
+  searchQuery: string,
+  maxResults: number = 50
+): Promise<ApifyRunResult> {
+  const input = {
+    searchQuery: searchQuery,
+    maxPages: maxResults,
+  }
+
+  return startApifyRun(APIFY_ACTORS.FACEBOOK_PAGES, input)
+}
+
+/**
+ * Match a Facebook page to existing prospect by website or phone
+ */
+export async function matchFacebookToProspect(
+  fbData: FacebookPagesResult,
+  scopeFilter: { userId?: string; organizationId?: string | null }
+): Promise<string | null> {
+  // Try by website domain
+  if (fbData.website) {
+    const domain = fbData.website.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase()
+    const byWebsite = await prisma.prospect.findFirst({
+      where: {
+        website: { contains: domain, mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byWebsite) return byWebsite.id
+  }
+
+  // Try by phone
+  const cleanPhone = fbData.phone?.replace(/\D/g, '') || null
+  if (cleanPhone && cleanPhone.length >= 10) {
+    const byPhone = await prisma.prospect.findFirst({
+      where: {
+        phone: { contains: cleanPhone.slice(-10) },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byPhone) return byPhone.id
+  }
+
+  // Try by name
+  if (fbData.name) {
+    const byName = await prisma.prospect.findFirst({
+      where: {
+        companyName: { contains: fbData.name.split(' ')[0], mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byName) return byName.id
+  }
+
+  return null
+}
+
+/**
+ * Enrich a prospect with Facebook data
+ */
+export async function enrichProspectWithFacebook(
+  prospectId: string,
+  fbData: FacebookPagesResult
+): Promise<void> {
+  const sources = await prisma.prospect.findUnique({
+    where: { id: prospectId },
+    select: { enrichmentSources: true },
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      companyFacebook: fbData.url || undefined,
+      facebookRating: fbData.rating || undefined,
+      facebookReviewCount: fbData.reviewCount || undefined,
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'facebook'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Import Facebook Pages results
+ */
+export async function importFacebookResults(
+  results: FacebookPagesResult[],
+  scopeFilter: { userId: string; organizationId: string | null }
+): Promise<{ matched: number; created: number; errors: number }> {
+  let matched = 0
+  let created = 0
+  let errors = 0
+
+  for (const result of results) {
+    try {
+      const existingId = await matchFacebookToProspect(result, scopeFilter)
+
+      if (existingId) {
+        await enrichProspectWithFacebook(existingId, result)
+        matched++
+      } else {
+        // Create new prospect from Facebook data
+        await prisma.prospect.create({
+          data: {
+            companyName: result.name,
+            businessType: result.category || null,
+            address: result.address || null,
+            city: result.city || null,
+            phone: result.phone || null,
+            email: result.email || null,
+            website: result.website || null,
+            companyFacebook: result.url,
+            facebookRating: result.rating || null,
+            facebookReviewCount: result.reviewCount || null,
+            dataSource: 'facebook',
+            dateCollected: new Date(),
+            enrichmentSources: ['facebook'],
+            enrichedAt: new Date(),
+            userId: scopeFilter.userId,
+            organizationId: scopeFilter.organizationId,
+          },
+        })
+        created++
+      }
+    } catch (error) {
+      console.error('Error processing Facebook result:', error)
+      errors++
+    }
+  }
+
+  return { matched, created, errors }
+}
+
+// ============================================
+// PHASE 3: LinkedIn Company Integration
+// ============================================
+
+/**
+ * Scrape LinkedIn for company details
+ * Uses: apimaestro/linkedin-company-detail
+ */
+export async function scrapeLinkedInCompany(
+  companyUrl: string
+): Promise<ApifyRunResult> {
+  const input = {
+    urls: [companyUrl],
+  }
+
+  return startApifyRun(APIFY_ACTORS.LINKEDIN_COMPANY, input)
+}
+
+/**
+ * Match a LinkedIn company to existing prospect
+ */
+export async function matchLinkedInToProspect(
+  liData: LinkedInCompanyResult,
+  scopeFilter: { userId?: string; organizationId?: string | null }
+): Promise<string | null> {
+  // Try by website domain
+  if (liData.website) {
+    const domain = liData.website.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase()
+    const byWebsite = await prisma.prospect.findFirst({
+      where: {
+        website: { contains: domain, mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byWebsite) return byWebsite.id
+  }
+
+  // Try by company name
+  if (liData.name) {
+    const byName = await prisma.prospect.findFirst({
+      where: {
+        companyName: { contains: liData.name.split(' ')[0], mode: 'insensitive' },
+        ...scopeFilter,
+      },
+      select: { id: true },
+    })
+    if (byName) return byName.id
+  }
+
+  return null
+}
+
+/**
+ * Enrich a prospect with LinkedIn data
+ */
+export async function enrichProspectWithLinkedIn(
+  prospectId: string,
+  liData: LinkedInCompanyResult
+): Promise<void> {
+  const sources = await prisma.prospect.findUnique({
+    where: { id: prospectId },
+    select: { enrichmentSources: true },
+  })
+
+  await prisma.prospect.update({
+    where: { id: prospectId },
+    data: {
+      companyLinkedIn: liData.url || undefined,
+      employeeCount: liData.employeeCount || undefined,
+      enrichmentSources: [...new Set([...(sources?.enrichmentSources || []), 'linkedin'])],
+      enrichedAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Import LinkedIn results - typically used for enrichment only
+ */
+export async function importLinkedInResults(
+  results: LinkedInCompanyResult[],
+  scopeFilter: { userId: string; organizationId: string | null }
+): Promise<{ matched: number; created: number; errors: number }> {
+  let matched = 0
+  let created = 0
+  let errors = 0
+
+  for (const result of results) {
+    try {
+      const existingId = await matchLinkedInToProspect(result, scopeFilter)
+
+      if (existingId) {
+        await enrichProspectWithLinkedIn(existingId, result)
+        matched++
+      } else {
+        // Create from LinkedIn (less common, usually enrichment only)
+        await prisma.prospect.create({
+          data: {
+            companyName: result.name,
+            businessType: result.industry || null,
+            website: result.website || null,
+            companyLinkedIn: result.url,
+            employeeCount: result.employeeCount || null,
+            dataSource: 'linkedin',
+            dateCollected: new Date(),
+            enrichmentSources: ['linkedin'],
+            enrichedAt: new Date(),
+            userId: scopeFilter.userId,
+            organizationId: scopeFilter.organizationId,
+          },
+        })
+        created++
+      }
+    } catch (error) {
+      console.error('Error processing LinkedIn result:', error)
+      errors++
+    }
+  }
+
+  return { matched, created, errors }
+}
+
 
 
