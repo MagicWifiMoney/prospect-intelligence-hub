@@ -90,6 +90,7 @@
     "embla-carousel-react": "8.3.0",
     "formik": "2.4.5",
     "framer-motion": "10.18.0",
+    "googleapis": "^170.0.0",
     "gray-matter": "4.0.3",
     "input-otp": "1.2.4",
     "jotai": "2.6.0",
@@ -129,8 +130,5 @@
     "> 0.5%",
     "last 2 versions",
     "not dead"
-  ],
-  "engines": {
-    "node": "20.x"
-  }
+  ]
 }
