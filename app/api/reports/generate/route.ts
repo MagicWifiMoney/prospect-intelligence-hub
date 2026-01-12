@@ -128,28 +128,44 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url)
         const prospectId = searchParams.get('prospectId')
 
-        if (!prospectId) {
-            return NextResponse.json({ error: 'prospectId is required' }, { status: 400 })
+        if (prospectId) {
+            // Verify prospect ownership
+            const prospect = await prisma.prospect.findFirst({
+                where: {
+                    id: prospectId,
+                    ...buildProspectWhereClause(scope),
+                },
+            })
+
+            if (!prospect) {
+                return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
+            }
+
+            const reports = await prisma.prospectReport.findMany({
+                where: { prospectId },
+                include: { prospect: { select: { companyName: true } } },
+                orderBy: { generatedAt: 'desc' },
+            })
+
+            return NextResponse.json({ reports })
+        } else {
+            // List all reports for prospects within the user's scope
+            const reports = await prisma.prospectReport.findMany({
+                where: {
+                    prospect: buildProspectWhereClause(scope),
+                },
+                include: {
+                    prospect: {
+                        select: {
+                            companyName: true,
+                        },
+                    },
+                },
+                orderBy: { generatedAt: 'desc' },
+            })
+
+            return NextResponse.json({ reports })
         }
-
-        // Verify prospect ownership
-        const prospect = await prisma.prospect.findFirst({
-            where: {
-                id: prospectId,
-                ...buildProspectWhereClause(scope),
-            },
-        })
-
-        if (!prospect) {
-            return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
-        }
-
-        const reports = await prisma.prospectReport.findMany({
-            where: { prospectId },
-            orderBy: { generatedAt: 'desc' },
-        })
-
-        return NextResponse.json({ reports })
 
     } catch (error) {
         console.error('Error fetching reports:', error)

@@ -27,7 +27,9 @@ import {
   Tag,
   Copy,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Share2,
+  Users
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -38,26 +40,41 @@ export default function ProspectDetailPage() {
   const [prospect, setProspect] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [generatingInsights, setGeneratingInsights] = useState(false)
+  const [generatingReport, setGeneratingReport] = useState(false)
   const [insights, setInsights] = useState<any>(null)
+  const [reports, setReports] = useState<any[]>([])
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchProspect()
+    fetchReports()
   }, [params.id])
+
+  const fetchReports = async () => {
+    try {
+      const response = await fetch(`/api/reports/generate?prospectId=${params.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setReports(data.reports || [])
+      }
+    } catch (error) {
+      console.error('Error fetching reports:', error)
+    }
+  }
 
   const fetchProspect = async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects/${params.id}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setProspect(data.prospect)
         setNotes(data.prospect.notes || '')
         setTags(data.prospect.tags || '')
-        
+
         // Parse pain points if available
         if (data.prospect.painPoints) {
           try {
@@ -125,6 +142,40 @@ export default function ProspectDetailPage() {
       })
     } finally {
       setGeneratingInsights(false)
+    }
+  }
+  const generateReport = async () => {
+    try {
+      setGeneratingReport(true)
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId: params.id })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "🚀 Report Generated",
+          description: data.cached ? "Retrieved recent report" : "New AI report created!"
+        })
+        fetchReports()
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to generate report",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate report",
+        variant: "destructive"
+      })
+    } finally {
+      setGeneratingReport(false)
     }
   }
 
@@ -257,6 +308,23 @@ export default function ProspectDetailPage() {
                 Mark as Contacted
               </Button>
             )}
+            <Button
+              onClick={generateReport}
+              disabled={generatingReport}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              {generatingReport ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Generate Shareable Report
+                </>
+              )}
+            </Button>
             <Button
               onClick={generateInsights}
               disabled={generatingInsights}
@@ -491,6 +559,63 @@ export default function ProspectDetailPage() {
             </Card>
           )}
 
+          {/* Shareable Reports */}
+          {reports.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Share2 className="h-5 w-5 text-cyan-500" />
+                  <span>Shareable Reports</span>
+                </CardTitle>
+                <CardDescription>
+                  AI-generated landing pages for this prospect
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {reports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium text-sm">
+                          {new Date(report.generatedAt).toLocaleDateString()} Audit
+                        </p>
+                        <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                          <span className="flex items-center">
+                            <Users className="h-3 w-3 mr-1" />
+                            {report.views} views
+                          </span>
+                          <span>•</span>
+                          <span>Expires {new Date(report.expiresAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(`${window.location.origin}/reports/${report.shareToken}`, 'Share link')}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Link
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`/reports/${report.shareToken}`, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Reviews */}
           <Card>
             <CardHeader>
@@ -509,11 +634,10 @@ export default function ProspectDetailPage() {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`h-4 w-4 ${
-                                i < (review.rating || 0)
-                                  ? 'text-yellow-500 fill-current'
-                                  : 'text-gray-300'
-                              }`}
+                              className={`h-4 w-4 ${i < (review.rating || 0)
+                                ? 'text-yellow-500 fill-current'
+                                : 'text-gray-300'
+                                }`}
                             />
                           ))}
                         </div>
@@ -608,16 +732,16 @@ export default function ProspectDetailPage() {
                     <div className="flex justify-between">
                       <span>Rating Quality</span>
                       <span className="font-medium">
-                        {prospect.googleRating >= 4.5 ? 'Excellent' : 
-                         prospect.googleRating >= 4.0 ? 'Good' : 
-                         prospect.googleRating >= 3.5 ? 'Fair' : 'Poor'}
+                        {prospect.googleRating >= 4.5 ? 'Excellent' :
+                          prospect.googleRating >= 4.0 ? 'Good' :
+                            prospect.googleRating >= 3.5 ? 'Fair' : 'Poor'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Review Count</span>
                       <span className="font-medium">
                         {prospect.reviewCount >= 50 ? 'High' :
-                         prospect.reviewCount >= 20 ? 'Medium' : 'Low'}
+                          prospect.reviewCount >= 20 ? 'Medium' : 'Low'}
                       </span>
                     </div>
                     <div className="flex justify-between">
