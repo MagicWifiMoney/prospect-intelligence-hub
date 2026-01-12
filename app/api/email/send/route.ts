@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
 import { sendEmail, replaceTemplateVariables, isGmailConnected } from '@/lib/gmail'
 
 /**
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.email) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Get data scope for isolation
+        const scope = await getDataScope()
+        if (!scope) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
@@ -43,9 +50,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'prospectId is required' }, { status: 400 })
         }
 
-        // Get prospect
-        const prospect = await prisma.prospect.findUnique({
-            where: { id: prospectId },
+        // Get prospect WITH DATA ISOLATION - critical security check
+        const prospect = await prisma.prospect.findFirst({
+            where: {
+                id: prospectId,
+                ...buildProspectWhereClause(scope),
+            },
             select: {
                 id: true,
                 email: true,
