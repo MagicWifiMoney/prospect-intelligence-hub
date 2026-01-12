@@ -34,8 +34,8 @@ export async function POST(
     const geminiApiKey = process.env.GEMINI_API_KEY
 
     if (!geminiApiKey) {
-      return NextResponse.json({ 
-        error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.' 
+      return NextResponse.json({
+        error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.'
       }, { status: 400 })
     }
 
@@ -69,7 +69,7 @@ Format as JSON with keys: outreachStrategy, painPoints (array), valueProposition
 
     // Call Gemini API
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -92,7 +92,7 @@ Format as JSON with keys: outreachStrategy, painPoints (array), valueProposition
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Gemini API error:', errorText)
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'AI analysis failed',
         details: errorText
       }, { status: 500 })
