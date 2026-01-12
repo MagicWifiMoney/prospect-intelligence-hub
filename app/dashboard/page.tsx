@@ -7,6 +7,7 @@ import { ProspectCharts } from '@/components/dashboard/prospect-charts'
 import { HotLeadsPreview } from '@/components/dashboard/hot-leads-preview'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { MarketTrendsPreview } from '@/components/dashboard/market-trends-preview'
+import { QuickStartGuide } from '@/components/dashboard/quick-start-guide'
 import { Sparkles, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -115,6 +116,9 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Quick Start Guide */}
+      <QuickStartGuide />
 
       {/* Overview Stats */}
       <OverviewStats
