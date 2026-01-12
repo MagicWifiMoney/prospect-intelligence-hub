@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY
 
 interface AnalysisResult {
   businessName: string
@@ -13,6 +14,49 @@ interface AnalysisResult {
   suggestedIndustries: string[]
   suggestedCities: string[]
   confidence: number
+  operationsSummary: string
+  icpDescription: string
+  icpPainPoints: string[]
+  industryPainPoints: string[]
+}
+
+// Fetch website context using Brave Search API
+async function fetchWebsiteContext(url: string): Promise<string> {
+  if (!BRAVE_API_KEY) {
+    console.log('Brave API key not configured, skipping web search')
+    return ''
+  }
+
+  try {
+    const searchQuery = `site:${new URL(url).hostname} about services`
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}&count=5`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY
+        }
+      }
+    )
+
+    if (!response.ok) {
+      console.error('Brave search failed:', response.status)
+      return ''
+    }
+
+    const data = await response.json()
+    const results = data.web?.results || []
+
+    // Compile search results into context
+    const context = results.map((r: { title?: string; description?: string; url?: string }) =>
+      `Title: ${r.title}\nDescription: ${r.description}\nURL: ${r.url}`
+    ).join('\n\n')
+
+    return context
+  } catch (error) {
+    console.error('Error fetching website context:', error)
+    return ''
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -41,35 +85,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Gemini API not configured' }, { status: 500 })
     }
 
-    // Use Gemini to analyze the website
-    const prompt = `Analyze this business website URL and extract information about the business.
+    // Fetch actual website context using Brave Search
+    const websiteContext = await fetchWebsiteContext(validUrl.toString())
+
+    // Build the prompt with real website context if available
+    const contextSection = websiteContext
+      ? `\n\nHere is actual content found from this website:\n${websiteContext}\n\nUse this real information to provide accurate analysis.`
+      : ''
+
+    const prompt = `Analyze this business website and extract comprehensive information about the business.
 
 URL: ${validUrl.toString()}
+${contextSection}
 
-Based on the URL and domain name, provide your best analysis of:
-1. The likely business name (from domain)
-2. The industry/niche they operate in
-3. Services they likely offer
+Based on the URL${websiteContext ? ' and the website content provided above' : ' and domain name'}, provide your best analysis of:
+1. The business name
+2. The industry/niche they operate in (be specific - e.g., "Chiropractic Care" not just "Healthcare")
+3. Services they offer
 4. Their target market (B2B, B2C, local, national)
 5. Their likely geographic focus
+6. A brief summary of their operations (what they do day-to-day)
+7. Their Ideal Customer Profile (ICP) - who are the people that would seek out this business? Be specific about demographics and needs.
+8. Common pain points their ICP experiences BEFORE finding this business (what problems drive them to seek this service?)
+9. Industry-specific challenges and pain points they face as a business
 
 Also suggest:
-- 3-5 related industries they might want to monitor for leads
-- 5-10 cities in Minnesota they might target (if they're a local service business)
+- 3-5 related industries that might refer customers to this business
+- 5-10 cities in Minnesota they might serve (if local)
+
+IMPORTANT: For ICP, focus on the END CUSTOMERS who would use this business's services, not other businesses. For example:
+- A chiropractor's ICP would be "People experiencing back pain, neck pain, or seeking preventive spinal care"
+- A marketing agency's ICP would be "Small business owners looking to grow their online presence"
 
 Respond in this exact JSON format:
 {
-  "businessName": "extracted or guessed business name",
-  "industry": "main industry category",
+  "businessName": "extracted business name",
+  "industry": "specific industry category",
   "services": ["service1", "service2", "service3"],
   "targetMarket": "B2B" | "B2C" | "Both",
-  "location": "guessed location or 'Unknown'",
+  "location": "city, state or 'Unknown'",
+  "operationsSummary": "Brief 1-2 sentence summary of what this business does",
+  "icpDescription": "Specific description of their ideal customer (the end user who buys their services)",
+  "icpPainPoints": ["specific pain point 1", "specific pain point 2", "specific pain point 3"],
+  "industryPainPoints": ["business challenge 1", "business challenge 2", "business challenge 3"],
   "suggestedIndustries": ["industry1", "industry2", "industry3"],
   "suggestedCities": ["Minneapolis", "St Paul", "Bloomington", "Plymouth", "Edina"],
   "confidence": 0.0-1.0
 }
 
-If you cannot determine something, make a reasonable guess based on common patterns. Always return valid JSON.`
+Always return valid JSON.`
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
@@ -82,7 +146,7 @@ If you cannot determine something, make a reasonable guess based on common patte
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.3,
-            maxOutputTokens: 1024,
+            maxOutputTokens: 1500,
           },
         }),
       }
@@ -117,6 +181,10 @@ If you cannot determine something, make a reasonable guess based on common patte
         services: ['Consulting', 'Professional Services'],
         targetMarket: 'B2B',
         location: 'Minnesota',
+        operationsSummary: 'A professional services business serving clients in their local area.',
+        icpDescription: 'Local businesses and homeowners looking for reliable service providers.',
+        icpPainPoints: ['Finding trustworthy contractors', 'Getting timely responses', 'Fair pricing'],
+        industryPainPoints: ['Lead generation', 'Standing out from competition', 'Building online presence'],
         suggestedIndustries: [
           'Plumbing',
           'HVAC',
@@ -145,6 +213,10 @@ If you cannot determine something, make a reasonable guess based on common patte
       services: analysis.services || [],
       targetMarket: analysis.targetMarket || 'B2B',
       location: analysis.location || 'Minnesota',
+      operationsSummary: analysis.operationsSummary || 'A professional services business.',
+      icpDescription: analysis.icpDescription || 'Local businesses and homeowners.',
+      icpPainPoints: analysis.icpPainPoints || ['Finding reliable services', 'Fair pricing', 'Timely responses'],
+      industryPainPoints: analysis.industryPainPoints || ['Lead generation', 'Competition', 'Online presence'],
       suggestedIndustries: analysis.suggestedIndustries || [
         'Plumbing',
         'HVAC',
