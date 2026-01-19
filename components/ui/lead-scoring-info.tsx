@@ -279,7 +279,7 @@ export function LeadScoringInfo({ trigger }: { trigger?: React.ReactNode }) {
           {/* Example Calculation */}
           <Card className="border-green-200 bg-green-50/50">
             <CardHeader>
-              <CardTitle className="text-lg">Example: "Metro Heating & Cooling"</CardTitle>
+              <CardTitle className="text-lg">Example: &ldquo;Metro Heating &amp; Cooling&rdquo;</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">

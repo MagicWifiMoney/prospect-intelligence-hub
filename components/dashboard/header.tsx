@@ -69,7 +69,7 @@ export function DashboardHeader() {
           <div className="flex items-center justify-center space-x-2 text-sm">
             <Eye className="h-4 w-4 text-cyan-400" />
             <span className="text-gray-300">
-              <strong className="text-white">Demo Mode:</strong> You're viewing the dashboard as a guest. Data is read-only.
+              <strong className="text-white">Demo Mode:</strong> You&apos;re viewing the dashboard as a guest. Data is read-only.
               <a href="/auth/signup" className="ml-2 text-cyan-400 hover:text-cyan-300 underline">
                 Create account
               </a>

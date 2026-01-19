@@ -432,7 +432,7 @@ export function LandingPage() {
               <span className="text-gradient"> Dominate</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              From lead discovery to closed deals, we've built the ultimate prospecting toolkit for digital marketing agencies.
+              From lead discovery to closed deals, we&apos;ve built the ultimate prospecting toolkit for digital marketing agencies.
             </p>
           </motion.div>
 
@@ -604,7 +604,7 @@ export function LandingPage() {
                     <Star key={star} className="w-5 h-5 text-amber-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-300 mb-6 leading-relaxed">"{testimonial.quote}"</p>
+                <p className="text-gray-300 mb-6 leading-relaxed">&ldquo;{testimonial.quote}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-amber-500" />
                   <div>

@@ -158,8 +158,8 @@ export default function TrendsPage() {
             <div>
               <h3 className="font-semibold text-purple-400 mb-1">How to Leverage Market Trends</h3>
               <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside">
-                <li><strong className="text-white">Click "Refresh Trends":</strong> Generate 5 new AI-powered insights about current market conditions relevant to your prospects</li>
-                <li><strong className="text-white">Focus on High Impact:</strong> Prioritize trends marked as "HIGH" impact - these represent significant opportunities or threats</li>
+                <li><strong className="text-white">Click &ldquo;Refresh Trends&rdquo;:</strong> Generate 5 new AI-powered insights about current market conditions relevant to your prospects</li>
+                <li><strong className="text-white">Focus on High Impact:</strong> Prioritize trends marked as &ldquo;HIGH&rdquo; impact - these represent significant opportunities or threats</li>
                 <li><strong className="text-white">Upward Trends:</strong> Growing opportunities where early adoption gives competitive advantage - mention these in outreach</li>
                 <li><strong className="text-white">Adjust Your Pitch:</strong> Use trending topics to make your outreach more timely and relevant</li>
                 <li><strong className="text-white">Stay Current:</strong> Refresh trends weekly to keep your market knowledge up-to-date</li>
@@ -213,7 +213,7 @@ export default function TrendsPage() {
           <Newspaper className="h-12 w-12 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-lg font-semibold text-white mb-2">No trends available</h3>
           <p className="text-gray-500 mb-4">
-            Click "Refresh Trends" to fetch the latest market insights
+            Click &ldquo;Refresh Trends&rdquo; to fetch the latest market insights
           </p>
           <Button onClick={handleRefresh} disabled={refreshing} className="bg-cyan-500 hover:bg-cyan-600">
             <TrendingUp className="h-4 w-4 mr-2" />

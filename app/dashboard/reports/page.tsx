@@ -34,7 +34,7 @@ export default async function ReportsPage() {
               <p className="text-sm text-gray-300">
                 Export any prospect data from the dashboard to CSV format for use in CRMs (HubSpot, Salesforce, GoHighLevel), email marketing platforms (Mailchimp, Constant Contact),
                 or offline analysis in Excel/Google Sheets. All exports include business name, contact info, lead scores, review metrics, and custom tags/notes.
-                Apply filters before exporting to create targeted lists (e.g., "hot leads in Minneapolis" or "landscapers with no website").
+                Apply filters before exporting to create targeted lists (e.g., &ldquo;hot leads in Minneapolis&rdquo; or &ldquo;landscapers with no website&rdquo;).
               </p>
             </div>
             <div>
@@ -45,7 +45,7 @@ export default async function ReportsPage() {
                 <li><strong className="text-white">CRM Import:</strong> Bulk import prospects into your CRM with lead scores and tags already assigned</li>
                 <li><strong className="text-white">Territory Planning:</strong> Export by city/region to assign territories to sales reps or contractors</li>
                 <li><strong className="text-white">Competitive Analysis:</strong> Export anomalies data to identify gaps in competitors' client bases</li>
-                <li><strong className="text-white">Performance Tracking:</strong> Regularly export contacted/converted data to measure team performance and ROI</li>
+                <li><strong className="text-white">Performance Tracking:</strong> Regularly export contacted/converted data to measure team performance &amp; ROI</li>
               </ul>
             </div>
           </div>

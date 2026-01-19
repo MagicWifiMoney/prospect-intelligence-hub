@@ -102,7 +102,7 @@ export default async function DashboardPage() {
           Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}!
         </h1>
         <p className="text-gray-400 mb-4">
-          Here's your prospect intelligence overview for today
+          Here&apos;s your prospect intelligence overview for today
         </p>
         <div className="backdrop-blur-sm bg-white/5 rounded-xl p-4 border border-white/10">
           <h3 className="font-semibold text-white mb-2 flex items-center text-sm">
