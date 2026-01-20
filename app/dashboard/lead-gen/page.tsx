@@ -265,10 +265,12 @@ export default function LeadGenPage() {
 
                 {/* Action Button */}
                 <div className="pt-2">
-                  <Button variant="outline" className="w-full bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white" size="sm">
-                    <Lightbulb className="h-4 w-4 mr-2" />
-                    View All {opp.category} Prospects
-                  </Button>
+                  <Link href={`/dashboard/prospects?businessType=${encodeURIComponent(opp.category)}`}>
+                    <Button variant="outline" className="w-full bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white" size="sm">
+                      <Lightbulb className="h-4 w-4 mr-2" />
+                      View All {opp.category} Prospects
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </motion.div>

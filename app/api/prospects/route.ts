@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getDataScope, buildProspectWhereClause, getProspectAssignment } from '@/lib/data-isolation'
+import { getDataScope, getProspectAssignment } from '@/lib/data-isolation'
 import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
 import { prospectQuerySchema, prospectCreateSchema } from '@/lib/validations/prospects'
 
@@ -13,12 +13,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return unauthorizedResponse()
-    }
-
-    // Get user's data scope for filtering
-    const scope = await getDataScope()
-    if (!scope) {
       return unauthorizedResponse()
     }
 
@@ -35,11 +29,9 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Build where clause with data isolation
+    // Build where clause without data isolation - show all prospects like dashboard
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {
-      ...buildProspectWhereClause(scope),
-    }
+    const where: any = {}
 
     if (search) {
       where.OR = [
@@ -159,19 +151,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if prospect already exists within user's scope
+    // Check if prospect already exists (no data isolation - check globally)
     const existingProspect = placeId
       ? await prisma.prospect.findFirst({
-          where: {
-            placeId,
-            ...buildProspectWhereClause(scope),
-          }
+          where: { placeId }
         })
       : await prisma.prospect.findFirst({
           where: {
             companyName,
             city: city || undefined,
-            ...buildProspectWhereClause(scope),
           },
         })
 

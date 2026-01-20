@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
 import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
 import { paginationSchema } from '@/lib/validations/prospects'
 
@@ -13,12 +12,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return unauthorizedResponse()
-    }
-
-    // Get user's data scope for filtering
-    const scope = await getDataScope()
-    if (!scope) {
       return unauthorizedResponse()
     }
 
@@ -34,10 +27,8 @@ export async function GET(request: NextRequest) {
     const { page, limit } = validated.data
     const skip = (page - 1) * limit
 
-    // Build where clause with data isolation and hot lead criteria
-    const baseWhere = buildProspectWhereClause(scope)
+    // Build where clause without data isolation - show all hot leads like dashboard
     const hotLeadWhere = {
-      ...baseWhere,
       OR: [
         { isHotLead: true },
         { leadScore: { gte: 75 } },

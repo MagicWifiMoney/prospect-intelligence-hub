@@ -61,7 +61,17 @@ interface Prospect {
   } | null
 }
 
-export function ProspectsTable() {
+interface ProspectsTableProps {
+  initialBusinessType?: string
+  initialCity?: string
+  initialSearch?: string
+}
+
+export function ProspectsTable({
+  initialBusinessType = '',
+  initialCity = '',
+  initialSearch = '',
+}: ProspectsTableProps) {
   const [prospects, setProspects] = useState<Prospect[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -73,7 +83,22 @@ export function ProspectsTable() {
   const fetchProspects = useCallback(async (currentPage = 1) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/prospects?page=${currentPage}&limit=20`)
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '20',
+      })
+
+      if (initialBusinessType) {
+        params.set('businessType', initialBusinessType)
+      }
+      if (initialCity) {
+        params.set('city', initialCity)
+      }
+      if (initialSearch) {
+        params.set('search', initialSearch)
+      }
+
+      const response = await fetch(`/api/prospects?${params.toString()}`)
 
       if (response.ok) {
         const data = await response.json()
@@ -94,7 +119,7 @@ export function ProspectsTable() {
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, initialBusinessType, initialCity, initialSearch])
 
   useEffect(() => {
     fetchProspects()

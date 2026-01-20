@@ -46,54 +46,41 @@ export function NewBusinessesTable() {
   const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate loading new businesses data
-    // In a real app, this would fetch from an API
-    setTimeout(() => {
-      const mockData: NewBusiness[] = [
-        {
-          id: '1',
-          companyName: 'Elite Home Renovations',
-          businessType: 'Contractor',
-          address: '1234 Main St, Minneapolis, MN 55401',
-          city: 'Minneapolis',
-          googleRating: null,
-          reviewCount: 0,
-          firstSeenAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-          isNewListing: true,
-          isNewReviews: false,
-          detectedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: '2',
-          companyName: 'Modern Plumbing Solutions',
-          businessType: 'Plumber',
-          address: '5678 Oak Ave, St. Paul, MN 55102',
-          city: 'St. Paul',
-          googleRating: 4.8,
-          reviewCount: 3,
-          firstSeenAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-          isNewListing: false,
-          isNewReviews: true,
-          detectedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: '3',
-          companyName: 'Fresh Paint Professionals',
-          businessType: 'Painter',
-          address: '9012 Pine Rd, Plymouth, MN 55447',
-          city: 'Plymouth',
-          googleRating: 5.0,
-          reviewCount: 1,
-          firstSeenAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-          isNewListing: true,
-          isNewReviews: true,
-          detectedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    const fetchNewBusinesses = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/prospects/new-businesses?limit=20')
+
+        if (response.ok) {
+          const data = await response.json()
+          // Transform dates from strings to Date objects
+          const businesses = (data.newBusinesses || []).map((b: NewBusiness) => ({
+            ...b,
+            firstSeenAt: new Date(b.firstSeenAt),
+            detectedAt: new Date(b.detectedAt),
+          }))
+          setNewBusinesses(businesses)
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to load new businesses',
+            variant: 'destructive',
+          })
         }
-      ]
-      setNewBusinesses(mockData)
-      setLoading(false)
-    }, 1000)
-  }, [])
+      } catch (error) {
+        console.error('Error fetching new businesses:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to load new businesses',
+          variant: 'destructive',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNewBusinesses()
+  }, [toast])
 
   const addToProspects = async (businessId: string, businessName: string) => {
     try {

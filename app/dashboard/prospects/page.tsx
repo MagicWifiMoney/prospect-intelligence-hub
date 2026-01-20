@@ -9,12 +9,21 @@ import { Users, Search } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ProspectsPage() {
+interface PageProps {
+  searchParams: Promise<{ businessType?: string; city?: string; search?: string }>
+}
+
+export default async function ProspectsPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions)
+  const params = await searchParams
 
   if (!session) {
     return null
   }
+
+  const initialBusinessType = params.businessType || ''
+  const initialCity = params.city || ''
+  const initialSearch = params.search || ''
 
   return (
     <div className="space-y-6">
@@ -84,7 +93,11 @@ export default async function ProspectsPage() {
             View and manage all prospects in your database
           </p>
         </div>
-        <ProspectsTable />
+        <ProspectsTable
+          initialBusinessType={initialBusinessType}
+          initialCity={initialCity}
+          initialSearch={initialSearch}
+        />
       </div>
     </div>
   )
