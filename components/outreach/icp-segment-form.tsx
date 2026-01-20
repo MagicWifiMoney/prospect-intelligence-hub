@@ -95,7 +95,7 @@ export function IcpSegmentForm({ segment, offers, onClose, onSave }: IcpSegmentF
   const [name, setName] = useState(segment?.name || '')
   const [description, setDescription] = useState(segment?.description || '')
   const [color, setColor] = useState(segment?.color || COLORS[0])
-  const [offerTemplateId, setOfferTemplateId] = useState(segment?.offerTemplateId || '')
+  const [offerTemplateId, setOfferTemplateId] = useState(segment?.offerTemplateId || 'none')
 
   // Rules
   const [minIcpScore, setMinIcpScore] = useState<number | undefined>(
@@ -171,7 +171,7 @@ export function IcpSegmentForm({ segment, offers, onClose, onSave }: IcpSegmentF
           description: description.trim() || null,
           color,
           rules,
-          offerTemplateId: offerTemplateId || null,
+          offerTemplateId: offerTemplateId === 'none' ? null : offerTemplateId,
         }),
       })
 
@@ -194,7 +194,7 @@ export function IcpSegmentForm({ segment, offers, onClose, onSave }: IcpSegmentF
   }
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-[#111827] border-gray-800 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">
@@ -251,7 +251,7 @@ export function IcpSegmentForm({ segment, offers, onClose, onSave }: IcpSegmentF
                 <SelectValue placeholder="Select an offer template" />
               </SelectTrigger>
               <SelectContent className="bg-[#1f2937] border-gray-700">
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {offers.map((offer) => (
                   <SelectItem key={offer.id} value={offer.id}>
                     {offer.name} {offer.price && `(${offer.price})`}

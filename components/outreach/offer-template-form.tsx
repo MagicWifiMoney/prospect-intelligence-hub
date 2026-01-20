@@ -139,7 +139,7 @@ Best regards`
   }
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-[#111827] border-gray-800 max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">
