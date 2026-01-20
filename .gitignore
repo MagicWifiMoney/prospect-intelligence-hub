@@ -42,3 +42,5 @@ prisma/generated/
 # Misc
 *.tsbuildinfo
 .neon
+.env.production
+.env.vercel

@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
 import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
-import { sendEmail, isGmailConnected, replaceTemplateVariables } from '@/lib/gmail'
+import { sendEmail, isResendConfigured, replaceTemplateVariables } from '@/lib/resend'
 import { buildPrismaWhereFromRules, SegmentRules } from '@/lib/icp-rules'
 
 // Fallback email when no template and AI fails
@@ -175,10 +175,9 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse()
     }
 
-    // Check Gmail connection
-    const gmailConnected = await isGmailConnected(scope.userId)
-    if (!gmailConnected) {
-      return validationErrorResponse('Gmail not connected. Please connect your Gmail account in Settings.')
+    // Check Resend is configured
+    if (!isResendConfigured()) {
+      return validationErrorResponse('Email not configured. Please add RESEND_API_KEY to environment.')
     }
 
     const body = await request.json()
@@ -310,8 +309,16 @@ export async function POST(request: NextRequest) {
         // Generate email content
         const { subject, body: emailBody } = await generateEmailContent(prospect, offer)
 
-        // Send via Gmail
-        const { messageId, threadId } = await sendEmail(scope.userId, recipientEmail, subject, emailBody)
+        // Send via Resend
+        const result = await sendEmail({
+          to: recipientEmail,
+          subject,
+          html: emailBody.replace(/\n/g, '<br>'),
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to send')
+        }
 
         // Record in SentEmail table
         await prisma.sentEmail.create({
@@ -319,8 +326,8 @@ export async function POST(request: NextRequest) {
             prospectId: prospect.id,
             subject,
             body: emailBody,
-            gmailMsgId: messageId,
-            threadId,
+            gmailMsgId: result.messageId || null,
+            threadId: null,
             status: 'sent',
           },
         })
@@ -332,7 +339,6 @@ export async function POST(request: NextRequest) {
             contactedAt: new Date(),
             lastEmailSentAt: new Date(),
             emailCount: { increment: 1 },
-            emailThreadId: threadId,
           },
         })
 
@@ -343,8 +349,7 @@ export async function POST(request: NextRequest) {
             activityType: 'email_sent',
             content: `Batch email sent: ${subject}`,
             metadata: JSON.stringify({
-              messageId,
-              threadId,
+              messageId: result.messageId,
               segmentId: segment?.id,
               offerId: offer?.id,
             }),
@@ -357,7 +362,7 @@ export async function POST(request: NextRequest) {
           companyName: prospect.companyName,
           recipientEmail,
           success: true,
-          messageId,
+          messageId: result.messageId,
         })
       } catch (error) {
         console.error(`Failed to send email to ${recipientEmail}:`, error)

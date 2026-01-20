@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Mail, Settings, ExternalLink, CheckCircle, Loader2, XCircle } from 'lucide-react'
+import { Mail, CheckCircle, Loader2, AlertCircle, ExternalLink } from 'lucide-react'
 
-interface GmailStatus {
-  connected: boolean
+interface EmailStatus {
+  configured: boolean
+  provider: string
+  fromEmail: string | null
   error?: string
 }
 
 export function GmailConnectionCard() {
-  const [status, setStatus] = useState<GmailStatus | null>(null)
+  const [status, setStatus] = useState<EmailStatus | null>(null)
   const [loading, setLoading] = useState(true)
-  const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
     checkStatus()
@@ -20,29 +21,14 @@ export function GmailConnectionCard() {
 
   async function checkStatus() {
     try {
-      const res = await fetch('/api/auth/gmail?action=status')
+      const res = await fetch('/api/email/status')
       const data = await res.json()
       setStatus(data)
     } catch (error) {
-      console.error('Failed to check Gmail status:', error)
-      setStatus({ connected: false, error: 'Failed to check status' })
+      console.error('Failed to check email status:', error)
+      setStatus({ configured: false, provider: 'resend', fromEmail: null, error: 'Failed to check status' })
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleDisconnect() {
-    setDisconnecting(true)
-    try {
-      const res = await fetch('/api/auth/gmail?action=disconnect')
-      const data = await res.json()
-      if (data.success) {
-        setStatus({ connected: false })
-      }
-    } catch (error) {
-      console.error('Failed to disconnect Gmail:', error)
-    } finally {
-      setDisconnecting(false)
     }
   }
 
@@ -55,7 +41,7 @@ export function GmailConnectionCard() {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-cyan-400 mb-2">
-              Checking Gmail Connection...
+              Checking Email Configuration...
             </h3>
           </div>
         </div>
@@ -63,7 +49,7 @@ export function GmailConnectionCard() {
     )
   }
 
-  if (status?.connected) {
+  if (status?.configured) {
     return (
       <div className="backdrop-blur-xl bg-gradient-to-r from-green-500/10 to-emerald-500/5 border border-green-500/20 rounded-2xl p-6">
         <div className="flex items-start space-x-4">
@@ -72,10 +58,10 @@ export function GmailConnectionCard() {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-green-400 mb-2">
-              Gmail Connected
+              Email Ready (Resend)
             </h3>
             <p className="text-sm text-gray-300 mb-4">
-              Your Gmail account is connected. You can now:
+              Resend is configured and ready to send emails. Sending from: <code className="bg-white/10 px-1 rounded text-cyan-400">{status.fromEmail}</code>
             </p>
             <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside mb-4">
               <li>Send personalized emails from prospect pages</li>
@@ -83,21 +69,9 @@ export function GmailConnectionCard() {
               <li>Send batch emails to ICP segments</li>
               <li>Track sent emails in the database</li>
             </ul>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                className="bg-white/5 border-white/10 text-gray-300 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
-              >
-                {disconnecting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" />
-                )}
-                Disconnect Gmail
-              </Button>
-            </div>
+            <p className="text-xs text-gray-500">
+              Free tier: 100 emails/day, 3,000/month
+            </p>
           </div>
         </div>
       </div>
@@ -105,40 +79,43 @@ export function GmailConnectionCard() {
   }
 
   return (
-    <div className="backdrop-blur-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/5 border border-cyan-500/20 rounded-2xl p-6">
+    <div className="backdrop-blur-xl bg-gradient-to-r from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-6">
       <div className="flex items-start space-x-4">
-        <div className="p-3 bg-cyan-500/20 rounded-lg">
-          <Settings className="h-6 w-6 text-cyan-400" />
+        <div className="p-3 bg-amber-500/20 rounded-lg">
+          <AlertCircle className="h-6 w-6 text-amber-400" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-cyan-400 mb-2">
-            Connect Your Gmail Account
+          <h3 className="font-semibold text-amber-400 mb-2">
+            Email Setup Required
           </h3>
           <p className="text-sm text-gray-300 mb-4">
-            Connect your Google Workspace account to send emails directly from the hub.
-            This will allow you to:
+            Add your Resend API key to enable email sending. Resend offers 100 free emails/day.
           </p>
-          <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside mb-4">
-            <li>Send personalized emails from prospect pages</li>
-            <li>Use mail merge templates with variables</li>
-            <li>Track sent emails and view replies</li>
-            <li>See conversation threads per prospect</li>
-          </ul>
+          <div className="bg-[#0d1424] p-3 rounded-lg font-mono text-sm border border-white/10 mb-4">
+            <p className="text-gray-400"># Add to .env (and Vercel)</p>
+            <p className="text-cyan-400">RESEND_API_KEY=re_xxxxxxxxxxxx</p>
+            <p className="text-gray-400 mt-2"># Optional: custom from address</p>
+            <p className="text-cyan-400">RESEND_FROM_EMAIL=you@yourdomain.com</p>
+          </div>
           <div className="flex space-x-3">
-            <Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white">
-              <a href="/api/auth/gmail?action=connect">
+            <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
+              <a
+                href="https://resend.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Mail className="h-4 w-4 mr-2" />
-                Connect Gmail
+                Get Resend API Key
               </a>
             </Button>
             <Button variant="outline" asChild className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
               <a
-                href="https://console.cloud.google.com/apis/credentials"
+                href="https://resend.com/docs"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Setup OAuth Credentials
+                Resend Docs
               </a>
             </Button>
           </div>

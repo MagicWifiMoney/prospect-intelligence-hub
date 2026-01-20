@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
-import { sendEmail, replaceTemplateVariables, isGmailConnected } from '@/lib/gmail'
+import { sendEmail, replaceTemplateVariables, isResendConfigured } from '@/lib/resend'
 
 /**
  * POST: Send an email to a prospect
@@ -34,11 +34,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
-        // Check Gmail connection
-        const connected = await isGmailConnected(user.id)
-        if (!connected) {
+        // Check Resend is configured
+        if (!isResendConfigured()) {
             return NextResponse.json(
-                { error: 'Gmail not connected. Please connect your Gmail account first.' },
+                { error: 'Email not configured. Please add RESEND_API_KEY to environment.' },
                 { status: 400 }
             )
         }
@@ -116,14 +115,19 @@ export async function POST(request: NextRequest) {
         emailSubject = replaceTemplateVariables(emailSubject, prospect)
         emailBody = replaceTemplateVariables(emailBody, prospect)
 
-        // Send the email
-        const result = await sendEmail(
-            user.id,
-            recipientEmail,
-            emailSubject,
-            emailBody.replace(/\n/g, '<br>'), // Convert newlines to HTML
-            user.name || undefined
-        )
+        // Send the email via Resend
+        const result = await sendEmail({
+            to: recipientEmail,
+            subject: emailSubject,
+            html: emailBody.replace(/\n/g, '<br>'), // Convert newlines to HTML
+        })
+
+        if (!result.success) {
+            return NextResponse.json(
+                { error: result.error || 'Failed to send email' },
+                { status: 500 }
+            )
+        }
 
         // Record the sent email
         const sentEmail = await prisma.sentEmail.create({
@@ -132,8 +136,8 @@ export async function POST(request: NextRequest) {
                 templateId: templateId || null,
                 subject: emailSubject,
                 body: emailBody,
-                gmailMsgId: result.messageId,
-                threadId: result.threadId,
+                gmailMsgId: result.messageId || null,
+                threadId: null,
                 status: 'sent',
             },
         })
@@ -143,7 +147,6 @@ export async function POST(request: NextRequest) {
             where: { id: prospect.id },
             data: {
                 contactedAt: new Date(),
-                emailThreadId: result.threadId,
                 emailCount: { increment: 1 },
                 lastEmailSentAt: new Date(),
             },
@@ -154,7 +157,6 @@ export async function POST(request: NextRequest) {
             sentEmail: {
                 id: sentEmail.id,
                 messageId: result.messageId,
-                threadId: result.threadId,
             },
         })
 

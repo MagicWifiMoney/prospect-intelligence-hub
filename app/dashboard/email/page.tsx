@@ -118,22 +118,20 @@ export default async function EmailHubPage() {
         <div className="p-6 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white font-display">Setup Instructions</h3>
           <p className="text-sm text-gray-500">
-            How to enable Gmail integration
+            How to enable email sending with Resend
           </p>
         </div>
         <div className="p-6">
           <ol className="list-decimal list-inside space-y-2 text-sm text-gray-300">
-            <li>Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">Google Cloud Console</a></li>
-            <li>Create a new project or select existing one</li>
-            <li>Enable the Gmail API</li>
-            <li>Create OAuth 2.0 credentials (Web application type)</li>
-            <li>Add redirect URIs:<br />
-              <code className="bg-white/10 px-1 rounded text-cyan-400">http://localhost:3000/api/auth/gmail/callback</code><br />
-              <code className="bg-white/10 px-1 rounded text-cyan-400">https://prospect-intelligence-hub.vercel.app/api/auth/gmail/callback</code>
-            </li>
-            <li>Copy Client ID and Client Secret to your .env file (and Vercel env vars)</li>
-            <li>Restart the app and click &quot;Connect Gmail&quot;</li>
+            <li>Go to <a href="https://resend.com/signup" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">resend.com</a> and create an account (free)</li>
+            <li>Go to <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">API Keys</a> and create a new key</li>
+            <li>Add <code className="bg-white/10 px-1 rounded text-cyan-400">RESEND_API_KEY=re_xxxx</code> to .env and Vercel</li>
+            <li>(Optional) Add a custom domain in Resend for better deliverability</li>
+            <li>(Optional) Set <code className="bg-white/10 px-1 rounded text-cyan-400">RESEND_FROM_EMAIL</code> to send from your domain</li>
           </ol>
+          <p className="mt-4 text-xs text-gray-500">
+            Free tier includes 100 emails/day and 3,000 emails/month.
+          </p>
         </div>
       </div>
     </div>
