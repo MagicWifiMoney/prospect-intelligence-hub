@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
-import { Mail, Send, Inbox, FileText, Settings, ExternalLink } from 'lucide-react'
+import { Mail, Send, Inbox, FileText } from 'lucide-react'
+import { GmailConnectionCard } from '@/components/email/gmail-connection-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,45 +25,8 @@ export default async function EmailHubPage() {
         </p>
       </div>
 
-      {/* Setup Required Card */}
-      <div className="backdrop-blur-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/5 border border-cyan-500/20 rounded-2xl p-6">
-        <div className="flex items-start space-x-4">
-          <div className="p-3 bg-cyan-500/20 rounded-lg">
-            <Settings className="h-6 w-6 text-cyan-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-cyan-400 mb-2">
-              Gmail Integration Setup Required
-            </h3>
-            <p className="text-sm text-gray-300 mb-4">
-              To send emails directly from the hub, you need to connect your Google Workspace account.
-              This will allow you to:
-            </p>
-            <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside mb-4">
-              <li>Send personalized emails from prospect pages</li>
-              <li>Use mail merge templates with variables</li>
-              <li>Track sent emails and view replies</li>
-              <li>See conversation threads per prospect</li>
-            </ul>
-            <div className="flex space-x-3">
-              <Button disabled className="bg-cyan-500/50 text-white cursor-not-allowed">
-                <Mail className="h-4 w-4 mr-2" />
-                Connect Gmail (Coming Soon)
-              </Button>
-              <Button variant="outline" asChild className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
-                <a
-                  href="https://console.cloud.google.com/apis/credentials"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Setup OAuth Credentials
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Gmail Connection Card */}
+      <GmailConnectionCard />
 
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -164,8 +127,11 @@ export default async function EmailHubPage() {
             <li>Create a new project or select existing one</li>
             <li>Enable the Gmail API</li>
             <li>Create OAuth 2.0 credentials (Web application type)</li>
-            <li>Add <code className="bg-white/10 px-1 rounded text-cyan-400">http://localhost:3000/api/auth/google</code> as authorized redirect URI</li>
-            <li>Copy Client ID and Client Secret to your .env file</li>
+            <li>Add redirect URIs:<br />
+              <code className="bg-white/10 px-1 rounded text-cyan-400">http://localhost:3000/api/auth/gmail/callback</code><br />
+              <code className="bg-white/10 px-1 rounded text-cyan-400">https://prospect-intelligence-hub.vercel.app/api/auth/gmail/callback</code>
+            </li>
+            <li>Copy Client ID and Client Secret to your .env file (and Vercel env vars)</li>
             <li>Restart the app and click &quot;Connect Gmail&quot;</li>
           </ol>
         </div>
