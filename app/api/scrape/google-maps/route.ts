@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
   scrapeGoogleMaps,
   scrapeMultipleSearches,
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const body = await request.json()
@@ -65,11 +66,7 @@ export async function POST(request: Request) {
       message: 'Scrape started successfully. Check status for updates.',
     })
   } catch (error) {
-    console.error('Error starting scrape:', error)
-    return NextResponse.json(
-      { error: 'Failed to start scrape', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/scrape/google-maps', 'Failed to start scrape')
   }
 }
 
@@ -77,7 +74,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     // Return available categories and cities
@@ -86,6 +83,6 @@ export async function GET() {
       cities: MN_CITIES,
     })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to get options' }, { status: 500 })
+    return apiErrorResponse(error, 'GET /api/scrape/google-maps', 'Failed to get options')
   }
 }

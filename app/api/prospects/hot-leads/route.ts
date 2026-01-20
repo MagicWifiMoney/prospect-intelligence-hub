@@ -5,34 +5,55 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
+import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
+import { paginationSchema } from '@/lib/validations/prospects'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const page = parseInt(searchParams.get('page') || '1')
+
+    // Validate pagination params
+    const params = Object.fromEntries(searchParams.entries())
+    const validated = paginationSchema.safeParse(params)
+    if (!validated.success) {
+      return validationErrorResponse('Invalid pagination parameters')
+    }
+
+    const { page, limit } = validated.data
     const skip = (page - 1) * limit
+
+    // Build where clause with data isolation and hot lead criteria
+    const baseWhere = buildProspectWhereClause(scope)
+    const hotLeadWhere = {
+      ...baseWhere,
+      OR: [
+        { isHotLead: true },
+        { leadScore: { gte: 75 } },
+        {
+          AND: [
+            { googleRating: { gte: 4.5 } },
+            { reviewCount: { gte: 20 } },
+            { leadScore: { gte: 60 } },
+          ]
+        }
+      ]
+    }
 
     const [prospects, total] = await Promise.all([
       prisma.prospect.findMany({
-        where: {
-          OR: [
-            { isHotLead: true },
-            { leadScore: { gte: 75 } },
-            { 
-              AND: [
-                { googleRating: { gte: 4.5 } },
-                { reviewCount: { gte: 20 } },
-                { leadScore: { gte: 60 } },
-              ]
-            }
-          ]
-        },
+        where: hotLeadWhere,
         skip,
         take: limit,
         orderBy: { leadScore: 'desc' },
@@ -56,21 +77,7 @@ export async function GET(request: NextRequest) {
           isConverted: true,
         },
       }),
-      prisma.prospect.count({
-        where: {
-          OR: [
-            { isHotLead: true },
-            { leadScore: { gte: 75 } },
-            { 
-              AND: [
-                { googleRating: { gte: 4.5 } },
-                { reviewCount: { gte: 20 } },
-                { leadScore: { gte: 60 } },
-              ]
-            }
-          ]
-        },
-      }),
+      prisma.prospect.count({ where: hotLeadWhere }),
     ])
 
     return NextResponse.json({
@@ -81,10 +88,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching hot leads:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/prospects/hot-leads', 'Failed to fetch hot leads')
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
   findDecisionMakers,
   getApifyRunStatus,
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const body = await request.json()
@@ -87,11 +88,7 @@ export async function POST(request: Request) {
       message: `Looking up decision makers for ${prospect.companyName}`,
     })
   } catch (error) {
-    console.error('Error starting decision maker lookup:', error)
-    return NextResponse.json(
-      { error: 'Failed to start lookup', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/scrape/find-decision-makers', 'Failed to start lookup')
   }
 }
 
@@ -104,7 +101,7 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -177,10 +174,6 @@ export async function GET(request: Request) {
       jobStatus: job.status,
     })
   } catch (error) {
-    console.error('Error checking lookup status:', error)
-    return NextResponse.json(
-      { error: 'Failed to check status', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/scrape/find-decision-makers', 'Failed to check status')
   }
 }

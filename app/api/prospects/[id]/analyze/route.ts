@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
+import { apiErrorResponse, notFoundResponse, unauthorizedResponse } from '@/lib/api-error'
 
 export async function POST(
   request: NextRequest,
@@ -13,21 +15,27 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
     }
 
     const prospectId = params.id
 
-    // Get prospect data
-    const prospect = await prisma.prospect.findUnique({
-      where: { id: prospectId },
+    // Get prospect data with data isolation
+    const prospect = await prisma.prospect.findFirst({
+      where: {
+        id: prospectId,
+        ...buildProspectWhereClause(scope),
+      },
     })
 
     if (!prospect) {
-      return NextResponse.json(
-        { error: 'Prospect not found' },
-        { status: 404 }
-      )
+      return notFoundResponse('Prospect')
     }
 
     // Create analysis prompt
@@ -89,10 +97,10 @@ export async function POST(
 
     // Detect anomalies
     const anomalies = []
-    
+
     // Check for personal phone numbers (simple heuristic)
     if (prospect.phone && (
-      prospect.phone.includes('cell') || 
+      prospect.phone.includes('cell') ||
       prospect.phone.includes('mobile') ||
       prospect.phone.match(/\b\d{3}-\d{3}-\d{4}\b/) // Basic mobile pattern
     )) {
@@ -124,7 +132,7 @@ export async function POST(
       },
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       analysis: {
         leadScore: analysisResult.leadScore,
@@ -136,10 +144,6 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error analyzing prospect:', error)
-    return NextResponse.json(
-      { error: 'Failed to analyze prospect' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/prospects/[id]/analyze', 'Failed to analyze prospect')
   }
 }

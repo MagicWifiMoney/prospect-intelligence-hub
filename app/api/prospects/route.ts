@@ -6,34 +6,37 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getDataScope, buildProspectWhereClause, getProspectAssignment } from '@/lib/data-isolation'
+import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
+import { prospectQuerySchema, prospectCreateSchema } from '@/lib/validations/prospects'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     // Get user's data scope for filtering
     const scope = await getDataScope()
     if (!scope) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const search = searchParams.get('search')
-    const businessType = searchParams.get('businessType')
-    const city = searchParams.get('city')
-    const isHotLead = searchParams.get('isHotLead')
-    const hasAnomalies = searchParams.get('hasAnomalies')
-    const minScore = searchParams.get('minScore')
-    const maxScore = searchParams.get('maxScore')
+
+    // Validate query parameters with Zod
+    const params = Object.fromEntries(searchParams.entries())
+    const validated = prospectQuerySchema.safeParse(params)
+    if (!validated.success) {
+      return validationErrorResponse('Invalid query parameters')
+    }
+
+    const { page, limit, search, businessType, city, isHotLead, hasAnomalies, minScore, maxScore } = validated.data
 
     const skip = (page - 1) * limit
 
     // Build where clause with data isolation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       ...buildProspectWhereClause(scope),
     }
@@ -64,10 +67,10 @@ export async function GET(request: NextRequest) {
       where.anomaliesDetected = { not: null }
     }
 
-    if (minScore || maxScore) {
+    if (minScore !== undefined || maxScore !== undefined) {
       where.leadScore = {}
-      if (minScore) where.leadScore.gte = parseFloat(minScore)
-      if (maxScore) where.leadScore.lte = parseFloat(maxScore)
+      if (minScore !== undefined) where.leadScore.gte = minScore
+      if (maxScore !== undefined) where.leadScore.lte = maxScore
     }
 
     // Get prospects and total count
@@ -112,11 +115,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching prospects:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/prospects', 'Failed to fetch prospects')
   }
 }
 
@@ -124,13 +123,13 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     // Get user's data scope for assignment
     const scope = await getDataScope()
     if (!scope) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const body = await request.json()
@@ -201,10 +200,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ prospect })
 
   } catch (error) {
-    console.error('Error creating prospect:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/prospects', 'Failed to create prospect')
   }
 }

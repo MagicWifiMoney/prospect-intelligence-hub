@@ -1,20 +1,34 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
+import { apiErrorResponse, notFoundResponse, unauthorizedResponse } from '@/lib/api-error'
+import { prospectUpdateSchema } from '@/lib/validations/prospects'
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
-    const prospect = await prisma.prospect.findUnique({
-      where: { id: params.id },
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
+    }
+
+    // Fetch prospect with data isolation
+    const prospect = await prisma.prospect.findFirst({
+      where: {
+        id: params.id,
+        ...buildProspectWhereClause(scope),
+      },
       include: {
         reviews: {
           orderBy: { publishedAt: 'desc' },
@@ -32,16 +46,12 @@ export async function GET(
     })
 
     if (!prospect) {
-      return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
+      return notFoundResponse('Prospect')
     }
 
     return NextResponse.json({ prospect })
   } catch (error) {
-    console.error('Error fetching prospect:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch prospect' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/prospects/[id]', 'Failed to fetch prospect')
   }
 }
 
@@ -50,15 +60,41 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
+    }
+
+    // Verify prospect belongs to user's scope before updating
+    const existingProspect = await prisma.prospect.findFirst({
+      where: {
+        id: params.id,
+        ...buildProspectWhereClause(scope),
+      },
+      select: { id: true },
+    })
+
+    if (!existingProspect) {
+      return notFoundResponse('Prospect')
     }
 
     const body = await req.json()
-    const { notes, tags, contactedAt, isConverted } = body
 
-    const updateData: any = {}
+    // Validate update payload
+    const validated = prospectUpdateSchema.safeParse(body)
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Invalid update data' }, { status: 400 })
+    }
+
+    const { notes, tags, contactedAt, isConverted } = validated.data
+
+    const updateData: Record<string, unknown> = {}
     if (notes !== undefined) updateData.notes = notes
     if (tags !== undefined) updateData.tags = tags
     if (contactedAt !== undefined) updateData.contactedAt = contactedAt ? new Date(contactedAt) : null
@@ -105,10 +141,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, prospect })
   } catch (error) {
-    console.error('Error updating prospect:', error)
-    return NextResponse.json(
-      { error: 'Failed to update prospect' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'PATCH /api/prospects/[id]', 'Failed to update prospect')
   }
 }

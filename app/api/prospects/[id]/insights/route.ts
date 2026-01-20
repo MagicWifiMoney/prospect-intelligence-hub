@@ -1,23 +1,35 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
+import { apiErrorResponse, notFoundResponse, unauthorizedResponse } from '@/lib/api-error'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
     }
 
     const prospectId = params.id
 
-    // Fetch prospect data
-    const prospect = await prisma.prospect.findUnique({
-      where: { id: prospectId },
+    // Fetch prospect data with data isolation
+    const prospect = await prisma.prospect.findFirst({
+      where: {
+        id: prospectId,
+        ...buildProspectWhereClause(scope),
+      },
       include: {
         reviews: {
           take: 10,
@@ -27,7 +39,7 @@ export async function POST(
     })
 
     if (!prospect) {
-      return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
+      return notFoundResponse('Prospect')
     }
 
     // Read Gemini API key from environment
@@ -93,8 +105,7 @@ Format as JSON with keys: outreachStrategy, painPoints (array), valueProposition
       const errorText = await response.text()
       console.error('Gemini API error:', errorText)
       return NextResponse.json({
-        error: 'AI analysis failed',
-        details: errorText
+        error: 'AI analysis failed'
       }, { status: 500 })
     }
 
@@ -117,7 +128,7 @@ Format as JSON with keys: outreachStrategy, painPoints (array), valueProposition
           competitiveGaps: ['See detailed analysis']
         }
       }
-    } catch (parseError) {
+    } catch {
       insights = {
         outreachStrategy: aiResponse.substring(0, 200),
         painPoints: ['Manual review recommended'],
@@ -158,10 +169,6 @@ Format as JSON with keys: outreachStrategy, painPoints (array), valueProposition
     })
 
   } catch (error) {
-    console.error('Error generating insights:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate insights' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/prospects/[id]/insights', 'Failed to generate insights')
   }
 }

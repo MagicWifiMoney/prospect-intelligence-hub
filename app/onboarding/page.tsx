@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -116,16 +116,7 @@ export default function OnboardingPage() {
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
 
-  // Check if user already completed onboarding
-  useEffect(() => {
-    if (status === 'authenticated') {
-      checkOnboardingStatus()
-    } else if (status === 'unauthenticated') {
-      router.push('/auth/signin')
-    }
-  }, [status, router])
-
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/onboarding/complete')
       const data = await res.json()
@@ -135,7 +126,16 @@ export default function OnboardingPage() {
     } catch (err) {
       console.error('Failed to check onboarding status:', err)
     }
-  }
+  }, [router])
+
+  // Check if user already completed onboarding
+  useEffect(() => {
+    if (status === 'authenticated') {
+      checkOnboardingStatus()
+    } else if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router, checkOnboardingStatus])
 
   const analyzeWebsite = async () => {
     if (!websiteUrl) {

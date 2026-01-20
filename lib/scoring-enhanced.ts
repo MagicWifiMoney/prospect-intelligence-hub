@@ -1,4 +1,4 @@
-import { Prospect } from '@prisma/client'
+import { Prospect } from '@/prisma/generated/client'
 
 // Keywords that indicate high-ticket/commercial business
 const HIGH_TICKET_KEYWORDS = {

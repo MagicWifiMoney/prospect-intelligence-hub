@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../prisma/generated/client'
 import { calculateEnhancedScores, getCategoryLeadValue, BORING_GOLDMINE_TYPES } from '../lib/scoring-enhanced'
 
 const prisma = new PrismaClient()

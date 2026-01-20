@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../prisma/generated/client'
 import bcrypt from 'bcryptjs'
 import fs from 'fs'
 import csv from 'csv-parser'

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
   getApifyRunStatus,
   getApifyDataset,
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -39,8 +40,7 @@ export async function GET(request: Request) {
     const recentJobs = await getRecentScrapeJobs(20)
     return NextResponse.json({ jobs: recentJobs })
   } catch (error) {
-    console.error('Error getting status:', error)
-    return NextResponse.json({ error: 'Failed to get status' }, { status: 500 })
+    return apiErrorResponse(error, 'GET /api/scrape/status', 'Failed to get status')
   }
 }
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { runId, jobId, datasetId } = await request.json()
@@ -86,10 +86,6 @@ export async function POST(request: Request) {
       message: `Imported ${importResult.imported} new prospects. ${importResult.duplicates} duplicates updated.`,
     })
   } catch (error) {
-    console.error('Error importing results:', error)
-    return NextResponse.json(
-      { error: 'Failed to import results', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/scrape/status', 'Failed to import results')
   }
 }

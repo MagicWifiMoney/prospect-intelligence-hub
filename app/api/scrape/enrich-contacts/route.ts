@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
   scrapeWebsiteContacts,
   getApifyRunStatus,
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const body = await request.json()
@@ -90,11 +91,7 @@ export async function POST(request: Request) {
       message: `Contact enrichment started for ${prospectsToEnrich.length} prospects`,
     })
   } catch (error) {
-    console.error('Error starting contact enrichment:', error)
-    return NextResponse.json(
-      { error: 'Failed to start enrichment', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/scrape/enrich-contacts', 'Failed to start enrichment')
   }
 }
 
@@ -107,7 +104,7 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -190,10 +187,6 @@ export async function GET(request: Request) {
       jobStatus: job.status,
     })
   } catch (error) {
-    console.error('Error checking enrichment status:', error)
-    return NextResponse.json(
-      { error: 'Failed to check status', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/scrape/enrich-contacts', 'Failed to check status')
   }
 }

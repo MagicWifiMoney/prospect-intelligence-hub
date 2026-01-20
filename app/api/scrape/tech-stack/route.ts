@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/prisma/generated/client'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
   detectTechStack,
   getApifyRunStatus,
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const body = await request.json()
@@ -103,11 +104,7 @@ export async function POST(request: Request) {
       message: `Tech stack detection started for ${domain}`,
     })
   } catch (error) {
-    console.error('Error starting tech detection:', error)
-    return NextResponse.json(
-      { error: 'Failed to start tech detection', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'POST /api/scrape/tech-stack', 'Failed to start tech detection')
   }
 }
 
@@ -120,7 +117,7 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -205,10 +202,6 @@ export async function GET(request: Request) {
       jobStatus: job.status,
     })
   } catch (error) {
-    console.error('Error checking tech detection status:', error)
-    return NextResponse.json(
-      { error: 'Failed to check status', details: String(error) },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/scrape/tech-stack', 'Failed to check status')
   }
 }

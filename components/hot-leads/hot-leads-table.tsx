@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -56,11 +56,11 @@ export function HotLeadsTable() {
   const [totalPages, setTotalPages] = useState(1)
   const { toast } = useToast()
 
-  const fetchHotLeads = async (currentPage = 1) => {
+  const fetchHotLeads = useCallback(async (currentPage = 1) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects/hot-leads?page=${currentPage}&limit=20`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setHotLeads(data.prospects || [])
@@ -77,11 +77,11 @@ export function HotLeadsTable() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     fetchHotLeads()
-  }, [])
+  }, [fetchHotLeads])
 
   const markAsContacted = async (leadId: string) => {
     try {

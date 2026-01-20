@@ -1,31 +1,51 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getDataScope, buildProspectWhereClause } from '@/lib/data-isolation'
+import { apiErrorResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-error'
+import { paginationSchema } from '@/lib/validations/prospects'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return unauthorizedResponse()
+    }
+
+    // Get user's data scope for filtering
+    const scope = await getDataScope()
+    if (!scope) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Validate pagination params
+    const params = Object.fromEntries(searchParams.entries())
+    const validated = paginationSchema.safeParse(params)
+    if (!validated.success) {
+      return validationErrorResponse('Invalid pagination parameters')
+    }
+
+    const { page, limit } = validated.data
     const skip = (page - 1) * limit
 
-    // Goldmines = prospects with 'boring_goldmine' tag OR high opportunity score
+    // Build where clause with data isolation and goldmine criteria
+    const baseWhere = buildProspectWhereClause(scope)
+    const goldmineWhere = {
+      ...baseWhere,
+      OR: [
+        { opportunityTags: { has: 'boring_goldmine' } },
+        { opportunityScore: { gte: 70 } },
+      ],
+    }
+
     const [prospects, total] = await Promise.all([
       prisma.prospect.findMany({
-        where: {
-          OR: [
-            { opportunityTags: { has: 'boring_goldmine' } },
-            { opportunityScore: { gte: 70 } },
-          ],
-        },
+        where: goldmineWhere,
         orderBy: { opportunityScore: 'desc' },
         skip,
         take: limit,
@@ -52,14 +72,7 @@ export async function GET(request: Request) {
           linkedin: true,
         },
       }),
-      prisma.prospect.count({
-        where: {
-          OR: [
-            { opportunityTags: { has: 'boring_goldmine' } },
-            { opportunityScore: { gte: 70 } },
-          ],
-        },
-      }),
+      prisma.prospect.count({ where: goldmineWhere }),
     ])
 
     return NextResponse.json({
@@ -69,10 +82,6 @@ export async function GET(request: Request) {
       totalPages: Math.ceil(total / limit),
     })
   } catch (error) {
-    console.error('Error fetching goldmines:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch goldmine prospects' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, 'GET /api/prospects/goldmines', 'Failed to fetch goldmine prospects')
   }
 }

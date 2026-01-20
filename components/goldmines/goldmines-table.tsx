@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,7 +48,7 @@ export function GoldminesTable() {
   const [total, setTotal] = useState(0)
   const { toast } = useToast()
 
-  const fetchGoldmines = async (currentPage = 1) => {
+  const fetchGoldmines = useCallback(async (currentPage = 1) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects/goldmines?page=${currentPage}&limit=20`)
@@ -70,11 +70,11 @@ export function GoldminesTable() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     fetchGoldmines()
-  }, [])
+  }, [fetchGoldmines])
 
   const getOpportunityBadges = (prospect: GoldmineProspect) => {
     const badges = []

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown, ExternalLink, Newspaper, AlertCircle } from 'lucide-react'
@@ -23,11 +23,7 @@ export default function TrendsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchTrends()
-  }, [])
-
-  const fetchTrends = async () => {
+  const fetchTrends = useCallback(async () => {
     try {
       const response = await fetch('/api/trends')
       if (!response.ok) throw new Error('Failed to fetch trends')
@@ -42,7 +38,11 @@ export default function TrendsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchTrends()
+  }, [fetchTrends])
 
   const handleRefresh = async () => {
     setRefreshing(true)

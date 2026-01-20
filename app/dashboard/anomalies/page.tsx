@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -60,15 +60,7 @@ export default function AnomaliesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [anomalyFilter, setAnomalyFilter] = useState('all')
 
-  useEffect(() => {
-    fetchAnomalies()
-  }, [])
-
-  useEffect(() => {
-    filterProspects()
-  }, [searchTerm, anomalyFilter, prospects])
-
-  const fetchAnomalies = async () => {
+  const fetchAnomalies = useCallback(async () => {
     try {
       const response = await fetch('/api/prospects?hasAnomalies=true&limit=100')
       if (!response.ok) throw new Error('Failed to fetch anomalies')
@@ -79,9 +71,9 @@ export default function AnomaliesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const filterProspects = () => {
+  const filterProspects = useCallback(() => {
     let filtered = [...prospects]
 
     // Search filter
@@ -101,7 +93,15 @@ export default function AnomaliesPage() {
     }
 
     setFilteredProspects(filtered)
-  }
+  }, [prospects, searchTerm, anomalyFilter])
+
+  useEffect(() => {
+    fetchAnomalies()
+  }, [fetchAnomalies])
+
+  useEffect(() => {
+    filterProspects()
+  }, [filterProspects])
 
   const getAnomalyIcon = (flag: string) => {
     switch (flag) {

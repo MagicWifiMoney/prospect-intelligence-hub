@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -29,9 +29,17 @@ import {
   CheckCircle2,
   Loader2,
   Share2,
-  Users
+  Users,
+  Send
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { OutreachEmailModal } from '@/components/prospects/outreach-email-modal'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export default function ProspectDetailPage() {
   const params = useParams()
@@ -46,13 +54,9 @@ export default function ProspectDetailPage() {
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
 
-  useEffect(() => {
-    fetchProspect()
-    fetchReports()
-  }, [params.id])
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       const response = await fetch(`/api/reports/generate?prospectId=${params.id}`)
       if (response.ok) {
@@ -62,9 +66,9 @@ export default function ProspectDetailPage() {
     } catch (error) {
       console.error('Error fetching reports:', error)
     }
-  }
+  }, [params.id])
 
-  const fetchProspect = async () => {
+  const fetchProspect = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects/${params.id}`)
@@ -108,7 +112,12 @@ export default function ProspectDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, toast, router])
+
+  useEffect(() => {
+    fetchProspect()
+    fetchReports()
+  }, [fetchProspect, fetchReports])
 
   const generateInsights = async () => {
     try {
@@ -308,6 +317,27 @@ export default function ProspectDetailPage() {
                 Mark as Contacted
               </Button>
             )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      onClick={() => setShowEmailModal(true)}
+                      disabled={!prospect.ownerEmail && !prospect.email}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      Generate Outreach Email
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!prospect.ownerEmail && !prospect.email && (
+                  <TooltipContent>
+                    <p>No email available for this prospect</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             <Button
               onClick={generateReport}
               disabled={generatingReport}
@@ -805,6 +835,17 @@ export default function ProspectDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Outreach Email Modal */}
+      <OutreachEmailModal
+        open={showEmailModal}
+        onOpenChange={setShowEmailModal}
+        prospectId={prospect.id}
+        companyName={prospect.companyName}
+        ownerEmail={prospect.ownerEmail}
+        email={prospect.email}
+        onEmailSent={fetchProspect}
+      />
     </div>
   )
 }

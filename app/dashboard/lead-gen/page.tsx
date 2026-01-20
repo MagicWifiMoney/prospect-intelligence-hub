@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -45,11 +45,7 @@ export default function LeadGenPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchOpportunities()
-  }, [])
-
-  const fetchOpportunities = async () => {
+  const fetchOpportunities = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/prospects/lead-gen')
@@ -69,7 +65,11 @@ export default function LeadGenPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchOpportunities()
+  }, [fetchOpportunities])
 
   const getOpportunityLevel = (score: number, leadValue: number, count: number) => {
     const index = score * leadValue * Math.log(count + 1) / 1000

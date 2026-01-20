@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -64,7 +64,7 @@ export function ProspectsTable() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const { toast } = useToast()
 
-  const fetchProspects = async (currentPage = 1) => {
+  const fetchProspects = useCallback(async (currentPage = 1) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/prospects?page=${currentPage}&limit=20`)
@@ -88,11 +88,11 @@ export function ProspectsTable() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     fetchProspects()
-  }, [])
+  }, [fetchProspects])
 
   const handleAnalyzeProspect = async (prospectId: string) => {
     try {
