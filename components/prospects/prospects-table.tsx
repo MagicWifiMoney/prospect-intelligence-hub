@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { QuickActionsMenu } from './quick-actions-menu'
 import { BulkActionToolbar } from './bulk-action-toolbar'
+import { IcpFilterBadge } from './icp-filter-badge'
 
 interface Prospect {
   id: string
@@ -53,6 +54,11 @@ interface Prospect {
   anomaliesDetected: string | null
   contactedAt: Date | null
   isConverted: boolean
+  icpSegment: {
+    id: string
+    name: string
+    color: string
+  } | null
 }
 
 export function ProspectsTable() {
@@ -201,6 +207,7 @@ export function ProspectsTable() {
               </TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Type & Location</TableHead>
+              <TableHead>ICP</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead>Score</TableHead>
@@ -267,6 +274,10 @@ export function ProspectsTable() {
                       </div>
                     )}
                   </div>
+                </TableCell>
+
+                <TableCell>
+                  <IcpFilterBadge segment={prospect.icpSegment} size="sm" />
                 </TableCell>
 
                 <TableCell>

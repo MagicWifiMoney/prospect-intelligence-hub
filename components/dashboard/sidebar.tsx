@@ -18,7 +18,8 @@ import {
   Gem,
   Mail,
   Globe,
-  Radar
+  Radar,
+  Send
 } from 'lucide-react'
 
 const navigation = [
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'Hot Leads', href: '/dashboard/hot-leads', icon: Star },
   { name: 'Goldmines', href: '/dashboard/goldmines', icon: Gem },
   { name: 'Lead Gen Opps', href: '/dashboard/lead-gen', icon: Globe },
+  { name: 'ICP Outreach', href: '/dashboard/outreach', icon: Send },
   { name: 'Scraper', href: '/dashboard/scrape', icon: Radar },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Market Trends', href: '/dashboard/trends', icon: TrendingUp },

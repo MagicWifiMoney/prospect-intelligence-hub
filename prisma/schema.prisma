@@ -69,6 +69,10 @@ model User {
 
   // User's own prospects (when not in an org)
   prospects           Prospect[]
+
+  // ICP & Outreach
+  icpSegments         IcpSegment[]
+  offerTemplates      OfferTemplate[]
 }
 
 // ============================================
@@ -222,6 +226,10 @@ model Prospect {
   enrichedAt            DateTime?
   enrichmentSources     String[]              // ["google_maps", "contact_scraper", "builtwith"]
   lastEnrichmentError   String?
+
+  // ICP Segmentation
+  icpSegmentId          String?
+  icpSegment            IcpSegment?           @relation(fields: [icpSegmentId], references: [id])
 }
 
 model ProspectHistorical {
@@ -374,7 +382,7 @@ model ProspectReport {
   id              String   @id @default(cuid())
   prospectId      String
   prospect        Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  
+
   // Generated content
   headline        String
   strengths       String[]
@@ -382,14 +390,60 @@ model ProspectReport {
   competitorInsights String @db.Text
   ctaText         String
   estimatedValue  String
-  
+
   // Sharing
   shareToken      String   @unique @default(cuid())
   views           Int      @default(0)
   lastViewedAt    DateTime?
-  
+
   // Metadata
   generatedAt     DateTime @default(now())
   expiresAt       DateTime?
+}
+
+// ============================================
+// ICP Segmentation & Outreach
+// ============================================
+
+model IcpSegment {
+  id              String          @id @default(cuid())
+  name            String          // "Big Spenders", "Low Hanging Fruit"
+  description     String?
+  color           String          @default("#06b6d4") // For UI badges
+  rules           Json            // { minIcpScore, maxIcpScore, businessTypes[], hasWebsite, minReviews, etc. }
+
+  // Linked offer template
+  offerTemplateId String?
+  offerTemplate   OfferTemplate?  @relation(fields: [offerTemplateId], references: [id])
+
+  // Data isolation
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Prospects in this segment
+  prospects       Prospect[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model OfferTemplate {
+  id              String       @id @default(cuid())
+  name            String       // "Website Package", "SEO Audit"
+  description     String?
+  price           String?      // "$997/mo", "$2,500 one-time"
+  features        String[]     // Bullet points
+  emailSubject    String       // Template with {{variables}}
+  emailBody       String       @db.Text // Template with {{variables}}
+
+  // Data isolation
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Segments using this offer
+  segments        IcpSegment[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 

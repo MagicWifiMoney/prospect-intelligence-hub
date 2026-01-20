@@ -101,6 +101,13 @@ export async function GET(request: NextRequest) {
           contactedAt: true,
           isConverted: true,
           updatedAt: true,
+          icpSegment: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
         },
       }),
       prisma.prospect.count({ where }),
