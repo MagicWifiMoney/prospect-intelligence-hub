@@ -281,13 +281,10 @@ export function LandingPage() {
                     <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 h-14 text-lg">
-                  Watch Demo
-                </Button>
               </div>
               <div className="flex items-center gap-8">
                 <div className="flex -space-x-3">
-                  {[1,2,3,4].map((i) => (
+                  {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 border-2 border-[#0a0f1a] flex items-center justify-center">
                       <Users className="w-4 h-4 text-gray-400" />
                     </div>
@@ -295,7 +292,7 @@ export function LandingPage() {
                 </div>
                 <div className="text-sm">
                   <div className="flex items-center text-amber-400 mb-1">
-                    {[1,2,3,4,5].map((i) => (
+                    {[1, 2, 3, 4, 5].map((i) => (
                       <Star key={i} className="w-4 h-4 fill-current" />
                     ))}
                   </div>
@@ -600,7 +597,7 @@ export function LandingPage() {
                 className="glass-strong rounded-2xl p-8"
               >
                 <div className="flex mb-4">
-                  {[1,2,3,4,5].map((star) => (
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} className="w-5 h-5 text-amber-400 fill-current" />
                   ))}
                 </div>
