@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Users, Mail, Target, DollarSign, Loader2 } from 'lucide-react'
+import { Plus, Users, Mail, Target, DollarSign, Loader2, RefreshCw, ShieldCheck } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { IcpSegmentCard } from '@/components/outreach/icp-segment-card'
 import { IcpSegmentForm } from '@/components/outreach/icp-segment-form'
 import { OfferTemplateForm } from '@/components/outreach/offer-template-form'
 import { BatchEmailPreview } from '@/components/outreach/batch-email-preview'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface IcpSegment {
   id: string
@@ -230,46 +232,52 @@ export default function OutreachPage() {
           <TabsTrigger value="offers" className="data-[state=active]:bg-cyan-500/20">
             Offer Templates
           </TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-cyan-500/20">
+            Delivery Settings
+          </TabsTrigger>
         </TabsList>
 
         {/* Segments Tab */}
-        <TabsContent value="segments" className="space-y-6">
-          <div className="flex justify-end">
-            <Button
-              onClick={() => {
-                setEditingSegment(null)
-                setShowSegmentForm(true)
-              }}
-              className="bg-cyan-500 hover:bg-cyan-600"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New ICP Segment
-            </Button>
+        <TabsContent value="segments" className="space-y-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">High-Priority Command Center</h2>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                onClick={() => {
+                  toast({
+                    title: "GHL Sync Coming Soon",
+                    description: "Phase 3: Automated CRM bridging is in development.",
+                  })
+                }}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sync to GHL
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingSegment(null)
+                  setShowSegmentForm(true)
+                }}
+                className="bg-cyan-500 hover:bg-cyan-600"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New ICP Segment
+              </Button>
+            </div>
           </div>
 
-          {segments.length === 0 ? (
-            <Card className="bg-[#111827] border-gray-800">
-              <CardContent className="py-12 text-center">
-                <Target className="h-12 w-12 mx-auto text-gray-600 mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No ICP Segments</h3>
-                <p className="text-gray-400 mb-4">
-                  Create your first ICP segment to start targeting prospects
-                </p>
-                <Button
-                  onClick={() => setShowSegmentForm(true)}
-                  className="bg-cyan-500 hover:bg-cyan-600"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Segment
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {segments.map((segment) => (
+          {/* High Priority Tiles */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {['Home Services Goldmine', 'Healthcare Growth', 'Restaurant Loyalty'].map((name) => {
+              const segment = segments.find((s) => s.name === name)
+              if (!segment) return null
+              return (
                 <IcpSegmentCard
                   key={segment.id}
                   segment={segment}
+                  isHighPriority
                   onEdit={() => {
                     setEditingSegment(segment)
                     setShowSegmentForm(true)
@@ -278,9 +286,49 @@ export default function OutreachPage() {
                   onApply={() => handleApplySegment(segment.id)}
                   onSend={() => setSendingToSegment(segment)}
                 />
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
+
+          <div className="pt-8 border-t border-gray-800">
+            <h3 className="text-lg font-medium text-white mb-6">Discovery & Custom Segments</h3>
+            {segments.length === 0 ? (
+              <Card className="bg-[#111827] border-gray-800">
+                <CardContent className="py-12 text-center">
+                  <Target className="h-12 w-12 mx-auto text-gray-600 mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">No ICP Segments</h3>
+                  <p className="text-gray-400 mb-4">
+                    Create your first ICP segment to start targeting prospects
+                  </p>
+                  <Button
+                    onClick={() => setShowSegmentForm(true)}
+                    className="bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Segment
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {segments
+                  .filter((s) => !['Home Services Goldmine', 'Healthcare Growth', 'Restaurant Loyalty'].includes(s.name))
+                  .map((segment) => (
+                    <IcpSegmentCard
+                      key={segment.id}
+                      segment={segment}
+                      onEdit={() => {
+                        setEditingSegment(segment)
+                        setShowSegmentForm(true)
+                      }}
+                      onDelete={() => handleDeleteSegment(segment.id)}
+                      onApply={() => handleApplySegment(segment.id)}
+                      onSend={() => setSendingToSegment(segment)}
+                    />
+                  ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* Offers Tab */}
@@ -386,6 +434,61 @@ export default function OutreachPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-[#111827] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Mail className="h-5 w-5 mr-2 text-cyan-400" />
+                  Sending Limits
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Daily Send Limit</Label>
+                  <Input type="number" defaultValue={50} className="bg-[#0f172a] border-gray-700" />
+                  <p className="text-xs text-gray-500">Recommended: 50/day for new Gmail accounts to maintain health.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Delay Between Emails (seconds)</Label>
+                  <Input type="number" defaultValue={60} className="bg-[#0f172a] border-gray-700" />
+                </div>
+                <Button className="w-full bg-cyan-500 hover:bg-cyan-600">Save Configuration</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-[#111827] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <ShieldCheck className="h-5 w-5 mr-2 text-emerald-400" />
+                  Safety & Compliance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#0f172a]">
+                  <div>
+                    <p className="text-white font-medium">Unsubscribe Link</p>
+                    <p className="text-xs text-gray-400">Add automatic unsubscribe to all emails.</p>
+                  </div>
+                  <div className="w-12 h-6 bg-cyan-500 rounded-full relative">
+                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#0f172a]">
+                  <div>
+                    <p className="text-white font-medium">Resend Protection</p>
+                    <p className="text-xs text-gray-400">Prevent emailing same prospect within 30 days.</p>
+                  </div>
+                  <div className="w-12 h-6 bg-cyan-500 rounded-full relative">
+                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

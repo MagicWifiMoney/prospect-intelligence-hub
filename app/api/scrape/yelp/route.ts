@@ -1,9 +1,8 @@
-export const dynamic = 'force-dynamic';
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { getDataScope, getProspectAssignment } from '@/lib/data-isolation'
+import { getDataScope } from '@/lib/data-isolation'
+import { apiErrorResponse, unauthorizedResponse } from '@/lib/api-error'
 import {
     scrapeYelp,
     getApifyRunStatus,
@@ -13,26 +12,46 @@ import {
 } from '@/lib/apify'
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST: Start a new Yelp scrape job
- * Body: { searchQuery: string, location: string, maxResults?: number }
+ * Body: { prospectId?: string, searchQuery?: string, location?: string, maxResults?: number }
  */
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
         if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return unauthorizedResponse()
         }
 
         const scope = await getDataScope()
         if (!scope) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return unauthorizedResponse()
         }
 
         const body = await request.json()
-        const { searchQuery, location, maxResults = 50 } = body
+        const { prospectId, searchQuery, location, maxResults = 10 } = body
 
-        if (!searchQuery || !location) {
+        let finalSearchQuery = searchQuery
+        let finalLocation = location
+
+        // If prospectId is provided, pull details from DB
+        if (prospectId) {
+            const prospect = await prisma.prospect.findUnique({
+                where: { id: prospectId },
+                select: { companyName: true, city: true }
+            })
+
+            if (!prospect) {
+                return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
+            }
+
+            finalSearchQuery = finalSearchQuery || prospect.companyName
+            finalLocation = finalLocation || prospect.city
+        }
+
+        if (!finalSearchQuery || !finalLocation) {
             return NextResponse.json(
                 { error: 'searchQuery and location are required' },
                 { status: 400 }
@@ -40,7 +59,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Start the Yelp scrape
-        const run = await scrapeYelp(searchQuery, location, maxResults)
+        const run = await scrapeYelp(finalSearchQuery, finalLocation, maxResults)
 
         // Create a system job to track this
         const job = await prisma.systemJob.create({
@@ -48,14 +67,15 @@ export async function POST(request: NextRequest) {
                 jobType: 'yelp_scrape',
                 status: 'running',
                 payload: JSON.stringify({
-                    searchQuery,
-                    location,
+                    prospectId,
+                    searchQuery: finalSearchQuery,
+                    location: finalLocation,
                     maxResults,
                     apifyRunId: run.id,
-                    datasetId: run.datasetId,
                     userId: scope.userId,
                     organizationId: scope.organizationId,
                 }),
+                scheduledAt: new Date(),
                 startedAt: new Date(),
             },
         })
@@ -64,16 +84,11 @@ export async function POST(request: NextRequest) {
             success: true,
             jobId: job.id,
             apifyRunId: run.id,
-            status: run.status,
-            message: `Yelp scrape started for "${searchQuery}" in ${location}`,
+            message: `Yelp search started for "${finalSearchQuery}" in ${finalLocation}`,
         })
 
     } catch (error) {
-        console.error('Error starting Yelp scrape:', error)
-        return NextResponse.json(
-            { error: 'Failed to start Yelp scrape' },
-            { status: 500 }
-        )
+        return apiErrorResponse(error, 'POST /api/scrape/yelp', 'Failed to start Yelp scrape')
     }
 }
 
@@ -85,17 +100,14 @@ export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
         if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return unauthorizedResponse()
         }
 
         const { searchParams } = new URL(request.url)
         const jobId = searchParams.get('jobId')
 
         if (!jobId) {
-            return NextResponse.json(
-                { error: 'jobId is required' },
-                { status: 400 }
-            )
+            return NextResponse.json({ error: 'jobId is required' }, { status: 400 })
         }
 
         // Get the job
@@ -104,15 +116,12 @@ export async function GET(request: NextRequest) {
         })
 
         if (!job) {
-            return NextResponse.json(
-                { error: 'Job not found' },
-                { status: 404 }
-            )
+            return NextResponse.json({ error: 'Job not found' }, { status: 404 })
         }
 
         const payload = JSON.parse(job.payload || '{}')
 
-        // If already completed, return the result
+        // If already completed or failed, return the result
         if (job.status === 'completed' || job.status === 'failed') {
             return NextResponse.json({
                 status: job.status,
@@ -134,31 +143,28 @@ export async function GET(request: NextRequest) {
             })
 
             // Update job as completed
+            const resultSummary = {
+                totalResults: results.length,
+                matched: importResult.matched,
+                created: importResult.created,
+                errors: importResult.errors,
+            }
+
             await prisma.systemJob.update({
                 where: { id: jobId },
                 data: {
                     status: 'completed',
-                    result: JSON.stringify({
-                        totalResults: results.length,
-                        matched: importResult.matched,
-                        created: importResult.created,
-                        errors: importResult.errors,
-                    }),
+                    result: JSON.stringify(resultSummary),
                     completedAt: new Date(),
                 },
             })
 
             return NextResponse.json({
                 status: 'completed',
-                result: {
-                    totalResults: results.length,
-                    matched: importResult.matched,
-                    created: importResult.created,
-                    errors: importResult.errors,
-                },
+                result: resultSummary,
             })
 
-        } else if (runStatus.status === 'FAILED' || runStatus.status === 'ABORTED') {
+        } else if (runStatus.status === 'FAILED' || runStatus.status === 'ABORTED' || runStatus.status === 'TIMED-OUT') {
             // Update job as failed
             await prisma.systemJob.update({
                 where: { id: jobId },
@@ -184,10 +190,7 @@ export async function GET(request: NextRequest) {
         }
 
     } catch (error) {
-        console.error('Error checking Yelp scrape status:', error)
-        return NextResponse.json(
-            { error: 'Failed to check status' },
-            { status: 500 }
-        )
+        return apiErrorResponse(error, 'GET /api/scrape/yelp', 'Failed to check Yelp job status')
     }
 }
+

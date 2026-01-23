@@ -45,6 +45,7 @@ interface IcpSegment {
 
 interface IcpSegmentCardProps {
   segment: IcpSegment
+  isHighPriority?: boolean
   onEdit: () => void
   onDelete: () => void
   onApply: () => void
@@ -93,6 +94,7 @@ function getRulesSummary(rules: SegmentRules): string[] {
 
 export function IcpSegmentCard({
   segment,
+  isHighPriority,
   onEdit,
   onDelete,
   onApply,
@@ -101,8 +103,20 @@ export function IcpSegmentCard({
   const rulesSummary = getRulesSummary(segment.rules as SegmentRules)
 
   return (
-    <Card className="bg-[#111827] border-gray-800 hover:border-gray-700 transition-colors">
+    <Card
+      className={`bg-[#111827] border-gray-800 hover:border-gray-700 transition-all ${isHighPriority
+          ? 'ring-2 ring-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)] scale-[1.02]'
+          : ''
+        }`}
+    >
       <CardHeader className="pb-3">
+        {isHighPriority && (
+          <div className="flex items-center space-x-2 mb-2">
+            <Badge className="bg-cyan-500 text-white border-0 text-[10px] uppercase tracking-wider font-bold h-5 px-2">
+              Champion Flow
+            </Badge>
+          </div>
+        )}
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <div
@@ -211,10 +225,13 @@ export function IcpSegmentCard({
             size="sm"
             onClick={onSend}
             disabled={segment.matchingCount === 0}
-            className="flex-1 bg-cyan-500 hover:bg-cyan-600"
+            className={`flex-1 ${isHighPriority
+                ? 'bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300'
+                : 'bg-cyan-500 hover:bg-cyan-600'
+              }`}
           >
             <Mail className="h-4 w-4 mr-2" />
-            Send
+            Send Batch
           </Button>
         </div>
       </CardContent>

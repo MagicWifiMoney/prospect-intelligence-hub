@@ -227,6 +227,31 @@ model Prospect {
   enrichmentSources     String[]              // ["google_maps", "contact_scraper", "builtwith"]
   lastEnrichmentError   String?
 
+  // Personalized Audit Pages
+  auditToken            String?   @unique     // URL identifier for /audit/[token]
+  auditPassword         String?               // Simple password (company name lowercase)
+  auditInfographicUrl   String?               // Generated infographic image URL
+  auditGeneratedAt      DateTime?
+  auditViews            Int       @default(0)
+  loomVideoUrl          String?               // Personalized Loom video
+  auditHeroImageUrl     String?               // AI-generated hero image
+  heroImagePrompt       String?               // Prompt used for hero image
+
+  // Micro-Site Builder
+  siteSlug              String?   @unique     // URL slug for /sites/[slug]
+  siteEnabled           Boolean   @default(false)
+  siteExpiresAt         DateTime?
+  calendlyUrl           String?               // User's Calendly link
+  siteViewDuration      Int?                  // Avg view time in seconds
+  siteLastViewedAt      DateTime?
+
+  // Nuclear Demo Environment
+  demoLocationId        String?               // GHL sub-account ID
+  demoCreatedAt         DateTime?
+  demoTriggeredAt       DateTime?
+  demoPhone             String?               // Phone used for demo
+  demoStatus            String?               // "pending", "active", "converted"
+
   // ICP Segmentation
   icpSegmentId          String?
   icpSegment            IcpSegment?           @relation(fields: [icpSegmentId], references: [id])

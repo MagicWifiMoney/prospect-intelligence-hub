@@ -39,6 +39,10 @@ const TEMPLATE_VARIABLES = [
   { name: '{{city}}', desc: 'City' },
   { name: '{{googleRating}}', desc: 'Google rating' },
   { name: '{{reviewCount}}', desc: 'Review count' },
+  { name: '{{yelpRating}}', desc: 'Yelp rating' },
+  { name: '{{facebookRating}}', desc: 'Facebook rating' },
+  { name: '{{auditPageUrl}}', desc: 'Audit page URL' },
+  { name: '{{auditPassword}}', desc: 'Audit password' },
 ]
 
 export function OfferTemplateForm({ offer, onClose, onSave }: OfferTemplateFormProps) {
@@ -54,7 +58,7 @@ export function OfferTemplateForm({ offer, onClose, onSave }: OfferTemplateFormP
   )
   const [emailBody, setEmailBody] = useState(
     offer?.emailBody ||
-      `Hi {{ownerName}},
+    `Hi {{ownerName}},
 
 I came across {{companyName}} and was impressed by your {{googleRating}}-star rating in {{city}}.
 
@@ -233,9 +237,15 @@ Best regards`
               </div>
             </div>
 
-            {/* Variable Buttons */}
             <div className="mb-4">
-              <Label className="text-gray-400 text-sm mb-2 block">Insert Variables:</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-gray-400 text-sm">Insert Variables:</Label>
+                {emailBody.includes('[INSERT LOOM LINK HERE]') && (
+                  <Badge variant="outline" className="text-amber-400 border-amber-400/50 bg-amber-400/10">
+                    Loom Placeholder Detected
+                  </Badge>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATE_VARIABLES.map((v) => (
                   <Button

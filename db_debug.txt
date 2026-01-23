@@ -1,0 +1,184 @@
+SEGMENTS_COUNT: 5
+SEGMENTS: [
+  {
+    "id": "test-segment-1",
+    "name": "High-Rated Painters",
+    "description": "Painters with 4.5+ stars and 20+ reviews - prime candidates for website services",
+    "color": "#10b981",
+    "rules": {
+      "hasEmail": true,
+      "minRating": 4.5,
+      "minReviews": 20,
+      "businessTypes": [
+        "Painter"
+      ]
+    },
+    "offerTemplateId": "test-offer-1",
+    "userId": "cmk6csx7c0000ripl7y1oj9pw",
+    "createdAt": "2026-01-20T11:57:28.204Z",
+    "updatedAt": "2026-01-20T11:57:28.204Z"
+  },
+  {
+    "id": "test-segment-2",
+    "name": "Bath Remodelers",
+    "description": "Bath remodelers with good reviews",
+    "color": "#8b5cf6",
+    "rules": {
+      "hasEmail": true,
+      "minRating": 4,
+      "minReviews": 10,
+      "businessTypes": [
+        "Bath Remodeler"
+      ]
+    },
+    "offerTemplateId": null,
+    "userId": "cmk6csx7c0000ripl7y1oj9pw",
+    "createdAt": "2026-01-20T11:57:50.006Z",
+    "updatedAt": "2026-01-20T11:57:50.006Z"
+  },
+  {
+    "id": "cmkpvcp0c0007rinagmpjyhjv",
+    "name": "Home Services Goldmine",
+    "description": "Established trades with good ratings but needing automation or website help.",
+    "color": "#f59e0b",
+    "rules": {
+      "hasEmail": true,
+      "minRating": 4,
+      "minReviews": 10,
+      "businessTypes": [
+        "HVAC",
+        "Plumber",
+        "Roofer",
+        "Electrician",
+        "Contractor",
+        "Garage Door",
+        "Painter",
+        "Pest Control",
+        "Landscaper"
+      ]
+    },
+    "offerTemplateId": "cmkpvcome0001rinae2bdazzh",
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.613Z",
+    "updatedAt": "2026-01-22T19:52:51.613Z"
+  },
+  {
+    "id": "cmkpvcp570009rinarojzmqiy",
+    "name": "Healthcare Growth",
+    "description": "Health & Wellness providers with high reputations but no obvious automation.",
+    "color": "#06b6d4",
+    "rules": {
+      "hasEmail": true,
+      "minRating": 4,
+      "minReviews": 20,
+      "businessTypes": [
+        "Med Spa",
+        "Dental",
+        "Dentist",
+        "Chiropractor",
+        "Wellness",
+        "Physical Therapy"
+      ]
+    },
+    "offerTemplateId": "cmkpvcoso0003rinaq1sgx3fm",
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.787Z",
+    "updatedAt": "2026-01-22T19:52:51.787Z"
+  },
+  {
+    "id": "cmkpvcp8d000brinarfx9urf8",
+    "name": "Restaurant Loyalty",
+    "description": "Thriving local restaurants that could benefit from SMS retention.",
+    "color": "#ef4444",
+    "rules": {
+      "hasEmail": true,
+      "minRating": 4,
+      "minReviews": 50,
+      "businessTypes": [
+        "Restaurant",
+        "Cafe",
+        "Bar",
+        "Bakery",
+        "Grill"
+      ]
+    },
+    "offerTemplateId": null,
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.902Z",
+    "updatedAt": "2026-01-22T19:52:51.902Z"
+  }
+]
+OFFERS_COUNT: 4
+OFFERS: [
+  {
+    "id": "test-offer-1",
+    "name": "Website Redesign Package",
+    "description": "Complete website redesign for local businesses",
+    "price": "$2,497",
+    "features": [
+      "Modern responsive design",
+      "SEO optimization",
+      "5 pages included",
+      "30-day support"
+    ],
+    "emailSubject": "Quick question about {{companyName}}'s online presence",
+    "emailBody": "Hi {{ownerName}},\n\nI noticed {{companyName}} has great reviews ({{googleRating}} stars!) but your website might not be doing you justice.\n\nI help {{businessType}} businesses in {{city}} turn their online presence into a lead-generation machine.\n\nWould you be open to a quick 15-minute call this week?\n\nBest regards",
+    "userId": "cmk6csx7c0000ripl7y1oj9pw",
+    "createdAt": "2026-01-20T11:57:21.378Z",
+    "updatedAt": "2026-01-20T11:57:21.378Z"
+  },
+  {
+    "id": "cmkpvcome0001rinae2bdazzh",
+    "name": "Missed Call Text-Back + Speed-to-Lead",
+    "description": "Stop losing leads to competitors because you couldn't answer the phone. We automate the first contact so you win more jobs.",
+    "price": "$297/mo",
+    "features": [
+      "Instant missed call text-back (SMS)",
+      "Automated 5-minute lead response",
+      "7-touch follow-up sequence",
+      "Google Business Profile integration",
+      "Review generation after completions"
+    ],
+    "emailSubject": "Quick video about {{companyName}}'s Google listing",
+    "emailBody": "Hi {{ownerName}},\n\nI was looking at local {{businessType}} businesses in {{city}} and noticed a few things about {{companyName}}'s online presence that might be costing you leads.\n\nI recorded a quick 60-second video walking through what I found:\n[INSERT LOOM LINK HERE]\n\nSpecifically, I saw that your Google Business Profile is great ({{googleRating}} stars!), but you're likely missing 40-60% of potential calls because your staff is busy.\n\nI help companies like yours fix this with an automated \"Missed Call Text-Back\" system. It recovers about 2-3 jobs per month for my clients.\n\nHappy to chat if you want to see how it works.\n\nBest regards",
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.110Z",
+    "updatedAt": "2026-01-22T19:52:51.110Z"
+  },
+  {
+    "id": "cmkpvcoso0003rinaq1sgx3fm",
+    "name": "No-Show Killer + Patient Reactivation",
+    "description": "Reduce cancellations by 40-50% and fill your schedule by reactivating dormant patients.",
+    "price": "$397/mo",
+    "features": [
+      "Automated appointment SMS reminders",
+      "2-way confirmation texting",
+      "Reactivation sequence for 90-day inactive patients",
+      "Online booking widget for GBP/Website",
+      "Birthday & Milestone automation"
+    ],
+    "emailSubject": "Recovering $5k/mo in missed appointments for {{companyName}}",
+    "emailBody": "Hi {{ownerName}},\n\nI came across {{companyName}} while looking at {{city}} health and wellness providers. \n\nI noticed you have a strong reputation with {{reviewCount}} reviews, but I didn't see an easy way for patients to text for appointments or get automated reminders.\n\nMost clinics lose about 20% of their revenue to no-shows. I help clinics like yours reduce that by half using a simple \"No-Show Killer\" automation, and reactivate patients who haven't been in for 3+ months.\n\nWould you be open to a 10-minute chat about how much revenue you're currently leaving on the table?\n\nBest regards",
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.336Z",
+    "updatedAt": "2026-01-22T19:52:51.336Z"
+  },
+  {
+    "id": "cmkpvcovq0005rinacwgm65wv",
+    "name": "Restaurant Loyalty + SMS Blast",
+    "description": "Turn one-time diners into regulars with automated loyalty and review generation.",
+    "price": "$197/mo",
+    "features": [
+      "QR-code SMS list builder",
+      "Weekly specials / Happy Hour blasts",
+      "Birthday & Anniversary rewards",
+      "Review generation after dining",
+      "Customer retention tracking"
+    ],
+    "emailSubject": "Question about {{companyName}}'s guest experience",
+    "emailBody": "Hi {{ownerName}},\n\nI'm a local marketer in Minneapolis and I love what you're doing with {{companyName}}.\n\nI noticed you have a great {{googleRating}}-star rating, but in a competitive market like {{city}}, the biggest battle is keeping customers coming back.\n\nI help restaurants turn first-time guests into regulars using a low-friction SMS loyalty system. It typically sees a 10% coupon redemption rate, which is 5x higher than email.\n\nJust wanted to share this idea with you. Can we chat for 5 minutes next week?\n\nBest regards",
+    "userId": "cmk5xnim80000ri2x2crvgtvl",
+    "createdAt": "2026-01-22T19:52:51.446Z",
+    "updatedAt": "2026-01-22T19:52:51.446Z"
+  }
+]

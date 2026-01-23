@@ -143,6 +143,81 @@ export function PublicReportContent({ report, prospect }: PublicReportContentPro
                         </div>
                     </motion.div>
 
+                    {/* Directory Health */}
+                    {(prospect.yelpRating || prospect.angiRating || prospect.facebookRating) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="glass rounded-3xl overflow-hidden border-orange-500/10"
+                        >
+                            <div className="p-8 md:p-10">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                                        <Globe className="h-6 w-6 text-orange-400" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold font-display text-white">Online Directory Health</h3>
+                                </div>
+
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    {/* Google Item */}
+                                    <div className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center">
+                                        <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Google Maps</div>
+                                        <div className="text-3xl font-bold text-white mb-2">{prospect.googleRating || 'N/A'}</div>
+                                        <div className="flex justify-center mb-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`h-3 w-3 ${i < Math.floor(prospect.googleRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-600'}`} />
+                                            ))}
+                                        </div>
+                                        <div className="text-[10px] text-gray-500">{prospect.reviewCount || 0} reviews</div>
+                                    </div>
+
+                                    {/* Yelp Item */}
+                                    <div className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center relative overflow-hidden">
+                                        {!prospect.yelpRating && <div className="absolute inset-0 bg-rose-500/5 flex items-center justify-center backdrop-blur-[2px] z-10 text-rose-300 text-xs font-bold uppercase tracking-tight">Missing Presence</div>}
+                                        <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Yelp</div>
+                                        <div className="text-3xl font-bold text-white mb-2">{prospect.yelpRating || '---'}</div>
+                                        <div className="flex justify-center mb-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`h-3 w-3 ${i < Math.floor(prospect.yelpRating || 0) ? 'text-red-400 fill-current' : 'text-gray-600'}`} />
+                                            ))}
+                                        </div>
+                                        <div className="text-[10px] text-gray-500">{prospect.yelpReviewCount || 0} reviews</div>
+                                    </div>
+
+                                    {/* Angi / Social Item */}
+                                    <div className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center relative overflow-hidden">
+                                        {(!prospect.angiRating && !prospect.facebookRating) && <div className="absolute inset-0 bg-blue-500/5 flex items-center justify-center backdrop-blur-[2px] z-10 text-blue-300 text-xs font-bold uppercase tracking-tight">Low Visibility</div>}
+                                        <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Social & Trade</div>
+                                        <div className="text-3xl font-bold text-white mb-2">{prospect.angiRating || prospect.facebookRating || '---'}</div>
+                                        <div className="flex justify-center mb-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`h-3 w-3 ${i < Math.floor(prospect.angiRating || prospect.facebookRating || 0) ? 'text-blue-400 fill-current' : 'text-gray-600'}`} />
+                                            ))}
+                                        </div>
+                                        <div className="text-[10px] text-gray-500">
+                                            {prospect.angiRating ? 'Angi Detected' : prospect.facebookRating ? 'Facebook Detected' : 'No Presence Found'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Analysis Callout */}
+                                {prospect.googleRating > 1 && prospect.yelpRating > 0 && (prospect.googleRating - prospect.yelpRating > 0.6) && (
+                                    <div className="mt-8 p-5 rounded-2xl bg-orange-500/5 border border-orange-500/20 flex items-start gap-4">
+                                        <TrendingUp className="h-5 w-5 text-orange-400 flex-shrink-0 mt-1" />
+                                        <div>
+                                            <p className="text-white font-semibold mb-1">Reputation Gap Opportunity</p>
+                                            <p className="text-gray-400 text-sm leading-relaxed">
+                                                Your business has a strong {prospect.googleRating} rating on Google, but your Yelp presence is lagging at {prospect.yelpRating}.
+                                                Optimizing your Yelp profile could unlock a significant new stream of highly-qualified local leads.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* Competitor Insights */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

@@ -30,7 +30,14 @@ import {
   Loader2,
   Share2,
   Users,
-  Send
+  Send,
+
+  UserCheck,
+  Cpu,
+  ShieldCheck,
+  Search,
+  RefreshCw,
+  FileText
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { OutreachEmailModal } from '@/components/prospects/outreach-email-modal'
@@ -49,12 +56,16 @@ export default function ProspectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [generatingInsights, setGeneratingInsights] = useState(false)
   const [generatingReport, setGeneratingReport] = useState(false)
+  const [enrichingTech, setEnrichingTech] = useState(false)
+  const [enrichingYelp, setEnrichingYelp] = useState(false)
+  const [findingDecisionMakers, setFindingDecisionMakers] = useState(false)
   const [insights, setInsights] = useState<any>(null)
   const [reports, setReports] = useState<any[]>([])
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [generatingAudit, setGeneratingAudit] = useState(false)
 
   const fetchReports = useCallback(async () => {
     try {
@@ -113,6 +124,109 @@ export default function ProspectDetailPage() {
       setLoading(false)
     }
   }, [params.id, toast, router])
+
+  const enrichTechStack = async () => {
+    try {
+      setEnrichingTech(true)
+      const response = await fetch('/api/scrape/tech-stack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId: params.id })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "🛠️ Tech Analysis Started",
+          description: "Detecting CMS, Analytics, and more..."
+        })
+        // Simple polling for result or just refresh after a delay
+        setTimeout(fetchProspect, 5000)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to start tech detection",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Request failed",
+        variant: "destructive"
+      })
+    } finally {
+      setEnrichingTech(false)
+    }
+  }
+
+  const findDecisionMakersAction = async () => {
+    try {
+      setFindingDecisionMakers(true)
+      const response = await fetch('/api/scrape/find-decision-makers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId: params.id })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "🔍 Searching for Decision Makers",
+          description: "Looking for Owners, CEOs, and Managers..."
+        })
+        setTimeout(fetchProspect, 5000)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to start search",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Request failed",
+        variant: "destructive"
+      })
+    } finally {
+      setFindingDecisionMakers(false)
+    }
+  }
+  const enrichYelp = async () => {
+    try {
+      setEnrichingYelp(true)
+      const response = await fetch('/api/scrape/yelp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId: params.id })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "🥗 Yelp Analysis Started",
+          description: "Finding reputation gaps and ratings..."
+        })
+        setTimeout(fetchProspect, 8000)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to start Yelp scrape",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Request failed",
+        variant: "destructive"
+      })
+    } finally {
+      setEnrichingYelp(false)
+    }
+  }
+
 
   useEffect(() => {
     fetchProspect()
@@ -185,6 +299,54 @@ export default function ProspectDetailPage() {
       })
     } finally {
       setGeneratingReport(false)
+    }
+  }
+
+  const generateAuditPage = async () => {
+    try {
+      setGeneratingAudit(true)
+      const response = await fetch('/api/audit/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId: params.id })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "🔒 Audit Page Created",
+          description: (
+            <div className="space-y-2">
+              <p>Password: <strong>{data.auditPassword}</strong></p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(data.auditUrl)
+                  toast({ title: "Copied!", description: "Audit URL copied" })
+                }}
+                className="text-cyan-500 underline"
+              >
+                Copy URL
+              </button>
+            </div>
+          )
+        })
+        fetchProspect()
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to generate audit page",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate audit page",
+        variant: "destructive"
+      })
+    } finally {
+      setGeneratingAudit(false)
     }
   }
 
@@ -296,6 +458,15 @@ export default function ProspectDetailPage() {
                   Converted
                 </Badge>
               )}
+              {prospect.opportunityTags && prospect.opportunityTags.map((tag: string) => (
+                <Badge key={tag} variant="outline" className={`
+                  ${tag === 'boring_goldmine' ? 'border-amber-500 text-amber-500 bg-amber-500/10' : ''}
+                  ${tag === 'high_ticket' ? 'border-purple-500 text-purple-500 bg-purple-500/10' : ''}
+                  ${tag === 'leadgen_opp' ? 'border-cyan-500 text-cyan-500 bg-cyan-500/10' : ''}
+                `}>
+                  {tag.replace('_', ' ').toUpperCase()}
+                </Badge>
+              ))}
             </div>
 
             {prospect.businessType && (
@@ -317,6 +488,70 @@ export default function ProspectDetailPage() {
                 Mark as Contacted
               </Button>
             )}
+
+            {/* Technical Enrichment Buttons */}
+            <div className="flex bg-muted p-1 rounded-lg space-x-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={enrichTechStack}
+                      disabled={enrichingTech || !prospect.website}
+                    >
+                      {enrichingTech ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Cpu className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Enrich Tech Stack</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={enrichYelp}
+                      disabled={enrichingYelp}
+                    >
+                      {enrichingYelp ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Star className="h-4 w-4 text-red-500" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Enrich Yelp Data</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={findDecisionMakersAction}
+                      disabled={findingDecisionMakers}
+                    >
+                      {findingDecisionMakers ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Find Decision Makers</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -338,6 +573,7 @@ export default function ProspectDetailPage() {
                 )}
               </Tooltip>
             </TooltipProvider>
+
             <Button
               onClick={generateReport}
               disabled={generatingReport}
@@ -352,6 +588,23 @@ export default function ProspectDetailPage() {
                 <>
                   <Share2 className="mr-2 h-4 w-4" />
                   Generate Shareable Report
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={generateAuditPage}
+              disabled={generatingAudit}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {generatingAudit ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Audit Page
                 </>
               )}
             </Button>
@@ -517,6 +770,202 @@ export default function ProspectDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Decision Maker Info (Phase 1) */}
+          {(prospect.ownerName || prospect.ownerEmail || prospect.ownerLinkedIn) && (
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <UserCheck className="h-5 w-5 text-blue-500" />
+                  <span>Decision Maker</span>
+                </CardTitle>
+                <CardDescription>Primary business owner or manager</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {prospect.ownerName && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Name</p>
+                    <p className="font-medium">{prospect.ownerName}</p>
+                    {prospect.ownerTitle && <p className="text-xs text-muted-foreground">{prospect.ownerTitle}</p>}
+                  </div>
+                )}
+                {prospect.ownerEmail && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Direct Email</p>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium truncate">{prospect.ownerEmail}</p>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(prospect.ownerEmail, 'Owner email')}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {prospect.ownerPhone && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Direct Phone</p>
+                    <p className="font-medium">{prospect.ownerPhone}</p>
+                  </div>
+                )}
+                {prospect.ownerLinkedIn && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-bold">LinkedIn</p>
+                    <a href={prospect.ownerLinkedIn} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center">
+                      View Profile <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tech Stack Summary (Phase 1) */}
+          {(prospect.cmsType || prospect.techStackRaw || prospect.hasEcommerce) && (
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <Cpu className="h-5 w-5 text-purple-500" />
+                  <span>Technology Stack</span>
+                </CardTitle>
+                <CardDescription>Detected platform and tools</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {prospect.cmsType && (
+                    <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700">
+                      CMS: {prospect.cmsType}
+                    </Badge>
+                  )}
+                  {prospect.hasEcommerce && (
+                    <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+                      eCommerce Enabled
+                    </Badge>
+                  )}
+                  {prospect.hasAnalytics && (
+                    <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                      Analytics Tracking
+                    </Badge>
+                  )}
+                  {prospect.hasLiveChat && (
+                    <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700">
+                      Live Chat Present
+                    </Badge>
+                  )}
+                  {prospect.hasBookingWidget && (
+                    <Badge variant="outline" className="bg-cyan-50 border-cyan-200 text-cyan-700">
+                      Booking Widget Found
+                    </Badge>
+                  )}
+                </div>
+
+                {prospect.needsWebsite && (
+                  <div className="flex items-center space-x-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="font-semibold text-xs uppercase">Optimization Opportunity:</span>
+                    <span>No modern CMS detected or minimal tech stack found.</span>
+                  </div>
+                )}
+
+                {prospect.techStackRaw && (
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground mb-2">Detailed Tech Signature (Partial)</p>
+                    <div className="flex flex-wrap gap-1">
+                      {JSON.parse(JSON.stringify(prospect.techStackRaw)).slice(0, 8).map((tech: any, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[10px] py-0 h-5">
+                          {tech.name}
+                        </Badge>
+                      ))}
+                      {JSON.parse(JSON.stringify(prospect.techStackRaw)).length > 8 && (
+                        <span className="text-[10px] text-muted-foreground">+{JSON.parse(JSON.stringify(prospect.techStackRaw)).length - 8} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Directory Reputation Gaps (Phase 2) */}
+          {(prospect.yelpRating || prospect.angiRating || prospect.facebookRating || prospect.yelpUrl) && (
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <Star className="h-5 w-5 text-red-500" />
+                  <span>Directory Reputation Gaps</span>
+                </CardTitle>
+                <CardDescription>Cross-platform rating comparison</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Google vs Yelp */}
+                  <div className="p-3 bg-muted rounded-lg space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase">Google Maps</span>
+                      <Badge variant="outline" className="bg-white">{prospect.googleRating || 'N/A'} ⭐</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase text-red-600">Yelp</span>
+                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                        {prospect.yelpRating ? `${prospect.yelpRating} ⭐` : 'Not Found'}
+                      </Badge>
+                    </div>
+                    {prospect.googleRating && prospect.yelpRating && (prospect.googleRating - prospect.yelpRating > 0.5) && (
+                      <p className="text-[10px] text-amber-600 font-medium">
+                        ⚠️ Reputation Gap: High on Google, Low on Yelp
+                      </p>
+                    )}
+                    {prospect.yelpUrl && (
+                      <a
+                        href={prospect.yelpUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-600 hover:underline flex items-center pt-1"
+                      >
+                        View Yelp Profile <ExternalLink className="ml-1 h-2 w-2" />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Angi & Facebook */}
+                  <div className="p-3 bg-muted rounded-lg space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase text-blue-600">Angi Presence</span>
+                      <Badge variant="outline" className={prospect.angiRating ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-white"}>
+                        {prospect.angiRating ? `${prospect.angiRating} ⭐` : 'Not Detected'}
+                      </Badge>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase text-blue-800">Facebook</span>
+                      <Badge variant="outline" className={prospect.facebookRating ? "bg-blue-50 text-blue-900 border-blue-200" : "bg-white"}>
+                        {prospect.facebookRating ? `${prospect.facebookRating} ⭐` : 'Missing'}
+                      </Badge>
+                    </div>
+
+                    {(prospect.angiReviewCount || prospect.facebookReviewCount) && (
+                      <div className="pt-1 border-t border-muted-foreground/10">
+                        {prospect.angiReviewCount && (
+                          <p className="text-[10px] text-muted-foreground">Angi: {prospect.angiReviewCount} reviews</p>
+                        )}
+                        {prospect.facebookReviewCount && (
+                          <p className="text-[10px] text-muted-foreground">FB: {prospect.facebookReviewCount} reviews</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {prospect.yearsInBusiness && (
+                  <div className="flex items-center space-x-2 p-2 bg-blue-50 text-blue-700 rounded-lg text-xs border border-blue-100">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="font-semibold">Established Business:</span>
+                    <span>{prospect.yearsInBusiness} years of history detected via directories.</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+
 
           {/* AI Insights */}
           {insights && (
@@ -776,11 +1225,34 @@ export default function ProspectDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>Digital Presence</span>
-                      <span className="font-medium">
-                        {prospect.website ? 'Yes' : 'No'}
+                      <span className="font-medium text-blue-600">
+                        {prospect.website ? 'Website Detected' : 'No Website'}
                       </span>
                     </div>
+                    {prospect.website && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Modern CMS</span>
+                          <span className={prospect.hasCMS ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
+                            {prospect.hasCMS ? (prospect.cmsType || 'Yes') : 'No CMS Detected'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Analytics / Tracking</span>
+                          <span className={prospect.hasAnalytics ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {prospect.hasAnalytics ? 'Active' : 'Missing'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Lead Capture</span>
+                          <span className={(prospect.hasLiveChat || prospect.hasBookingWidget) ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
+                            {(prospect.hasLiveChat || prospect.hasBookingWidget) ? 'Active' : 'Incomplete'}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
+
                 </div>
               </CardContent>
             </Card>

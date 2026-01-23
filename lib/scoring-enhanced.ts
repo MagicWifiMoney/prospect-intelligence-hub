@@ -166,8 +166,12 @@ function calculateOpportunityScore(prospect: Prospect): { score: number; factors
   // No website or obviously basic website = huge opportunity
   if (!prospect.website) {
     factors.websiteGap = 30
+  } else if (prospect.needsWebsite) {
+    factors.websiteGap = 25 // Detected as "needs website" by tech scraper
   } else if (prospect.website && !prospect.website.includes('http')) {
     factors.websiteGap = 20 // Might be incomplete/broken
+  } else if (!prospect.hasCMS) {
+    factors.websiteGap = 15 // Has site but no modern CMS
   } else {
     factors.websiteGap = 5 // Has website but might still need help
   }
@@ -176,15 +180,26 @@ function calculateOpportunityScore(prospect: Prospect): { score: number; factors
   // Check for missing social media, no ads presence, etc.
   let marketingScore = 0
 
-  // No social media presence
-  if (!prospect.facebook && !prospect.instagram && !prospect.linkedin) {
+  // No social media presence (extracted from contact scraper or GB)
+  const hasSocials = prospect.facebook || prospect.instagram || prospect.linkedin ||
+    prospect.companyFacebook || prospect.companyInstagram || prospect.companyLinkedIn
+
+  if (!hasSocials) {
     marketingScore += 15
-  } else if (!prospect.facebook || !prospect.instagram) {
+  } else if (!(prospect.facebook || prospect.companyFacebook) || !(prospect.instagram || prospect.companyInstagram)) {
     marketingScore += 8
   }
 
+  // Missing conversion/tracking tools (from tech stack)
+  if (!prospect.hasAnalytics) {
+    marketingScore += 7 // No tracking = flying blind
+  }
+  if (!prospect.hasLiveChat && !prospect.hasBookingWidget) {
+    marketingScore += 5 // No easy way to capture leads
+  }
+
   // No email listed (harder to do email marketing)
-  if (!prospect.email) {
+  if (!prospect.email && !prospect.additionalEmails?.length) {
     marketingScore += 5
   }
 
@@ -194,6 +209,7 @@ function calculateOpportunityScore(prospect: Prospect): { score: number; factors
   }
 
   factors.marketingGap = Math.min(marketingScore, 30)
+
 
   // Competitor Weakness (20 points)
   // This is harder to determine without competitor data, but we can infer

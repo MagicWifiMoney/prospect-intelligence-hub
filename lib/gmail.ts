@@ -203,8 +203,16 @@ export function replaceTemplateVariables(
         website?: string | null
         phone?: string | null
         email?: string | null
+        auditToken?: string | null
+        auditPassword?: string | null
     }
 ): string {
+    // Build audit page URL if token exists
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const auditPageUrl = (prospect as any).auditToken
+        ? `${baseUrl}/audit/${(prospect as any).auditToken}`
+        : ''
+
     const replacements: Record<string, string> = {
         '{{companyName}}': prospect.companyName || 'your company',
         '{{ownerName}}': prospect.ownerName || 'there',
@@ -215,6 +223,12 @@ export function replaceTemplateVariables(
         '{{website}}': prospect.website || '',
         '{{phone}}': prospect.phone || '',
         '{{email}}': prospect.email || '',
+        '{{yelpRating}}': (prospect as any).yelpRating?.toString() || 'N/A',
+        '{{yelpReviewCount}}': (prospect as any).yelpReviewCount?.toString() || '0',
+        '{{facebookRating}}': (prospect as any).facebookRating?.toString() || 'N/A',
+        '{{angiRating}}': (prospect as any).angiRating?.toString() || 'N/A',
+        '{{auditPageUrl}}': auditPageUrl,
+        '{{auditPassword}}': (prospect as any).auditPassword || prospect.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || '',
     }
 
     let result = template
